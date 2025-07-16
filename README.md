@@ -4,14 +4,21 @@ A Model Context Protocol (MCP) server for Philips Hue v2 API, enabling native li
 
 ## Features
 
-- ✅ **Native v2 Effects**: Candle, fire, sparkle, cosmos, and more!
+### Core Lighting Control
+- ✅ **Native v2 Effects**: Candle, fire, sparkle, cosmos, prism, opal, glisten, and more!
 - ✅ **Comprehensive Light Control**: On/off, brightness, color, effects
 - ✅ **Group Management**: Control entire rooms at once
 - ✅ **Scene Support**: Activate and manage scenes
-- ✅ **Sensor Integration**: Motion, temperature, light level, buttons
 - ✅ **Device Discovery**: Automatic detection of all Hue devices
-- ✅ **Batch Commands**: Efficient multi-command execution
-- ✅ **Real-time Identification**: Make lights blink for identification
+
+### Advanced Features (New!)
+- 🚀 **Non-blocking Operations**: All commands execute asynchronously by default
+- 🎭 **Pre-built Effects**: Flash, pulse, color loop, strobe, and alert patterns
+- 🎨 **Custom Sequences**: Build complex lighting choreography with precise timing
+- 🔄 **Real-time Event Streaming**: Subscribe to motion, button, and light state changes
+- 📦 **Batch Commands**: Execute multiple commands with timing control
+- 🎮 **Entertainment Areas**: Support for gaming and media sync (DTLS foundation ready)
+- 🔍 **CRUD Operations**: Full create, read, update, delete for all resources
 
 ## Prerequisites
 
@@ -25,10 +32,7 @@ A Model Context Protocol (MCP) server for Philips Hue v2 API, enabling native li
 
 Find your bridge IP:
 ```bash
-# On macOS/Linux
-arp -a | grep -i philips
-
-# Or visit https://discovery.meethue.com/
+curl https://discovery.meethue.com/
 ```
 
 Get an API username:
@@ -84,35 +88,100 @@ Quit and restart Claude Desktop to load the new configuration.
 
 Once configured, you can ask Claude to:
 
+### Basic Control
 - "Turn on all office lights"
 - "Set the living room to candle effect"
 - "Dim bedroom lights to 20%"
 - "Make the kitchen lights blue"
-- "Create a fire effect in the office"
-- "List all motion sensors"
-- "Show me all available scenes"
-- "Identify which light is Office 1"
-- "Turn on candle effect on all office lights at once" (uses batch commands)
+
+### Effects & Sequences
+- "Flash the office lights red when my timer goes off"
+- "Make the lamp pulse like a heartbeat"
+- "Start a rainbow color loop on the kids' room lights"
+- "Create a sunrise simulation in the bedroom"
+- "Alert me with the desk lamp" (rapid attention-getting flashes)
+
+### Advanced Control
+- "Create a custom sequence that fades from red to blue over 10 seconds"
+- "Run a party mode with strobe effects"
+- "Show me all running light effects"
+- "Stop all light animations"
+
+### Sensors & Automation
+- "Subscribe to motion sensor events"
+- "List all temperature sensors"
+- "Show me when someone presses the Hue button"
 
 ## Available Tools
 
-- `list_lights` - Discover all lights
+### Basic Light Control
+- `list_lights` - Discover all available lights
 - `light_on/off` - Control individual lights
 - `light_brightness` - Set brightness (0-100%)
 - `light_color` - Set color (hex or name)
-- `light_effect` - Apply effects (candle, fire, sparkle, etc.)
+- `light_effect` - Apply native effects (candle, fire, sparkle, etc.)
+- `identify_light` - Make a light breathe for identification
+
+### Group & Room Control
 - `list_groups` - Discover all groups/rooms
 - `group_on/off` - Control entire groups
 - `group_brightness` - Set group brightness
 - `group_color` - Set group color
 - `group_effect` - Apply effects to groups
+- `list_rooms` - Discover all rooms with devices
+
+### Scenes & Automation
 - `list_scenes` - List available scenes
 - `activate_scene` - Activate a scene
-- `list_rooms` - Discover all rooms with devices
+- `batch_commands` - Execute multiple commands with timing (async by default!)
+
+### Pre-built Effects 🎭
+- `flash_effect` - Attention-getting flashes (notifications, alerts)
+- `pulse_effect` - Smooth breathing effect (meditation, ambiance)
+- `color_loop` - Continuous color cycling (parties, mood lighting)
+- `strobe_effect` - Rapid disco strobe (⚠️ use responsibly!)
+- `alert_effect` - Pre-programmed alert pattern
+
+### Advanced Sequencing 🎨
+- `custom_sequence` - Build complex multi-step lighting choreography
+- `list_sequences` - View all running effects
+- `stop_sequence` - Stop a running effect
+
+### Sensors & Events
 - `list_motion_sensors` - Get motion sensor states
 - `list_temperature_sensors` - Get temperature readings
-- `identify_light` - Make a light breathe for identification
-- `batch_commands` - Execute multiple commands efficiently
+- `start_event_stream` - Subscribe to real-time events
+- `stop_event_stream` - Stop event subscription
+
+### Entertainment & CRUD
+- `list_entertainment` - View entertainment areas
+- `create_resource` - Create new resources (lights, groups, etc.)
+- `update_resource` - Modify existing resources
+- `delete_resource` - Remove resources
+
+## Key Features Explained
+
+### 🚀 Non-blocking Operations
+All lighting commands execute asynchronously by default. This means:
+- Claude responds immediately while lights change in the background
+- You can stack multiple effects on different lights
+- Complex sequences won't freeze the conversation
+- Use `async: false` in batch commands if you need to wait
+
+### 🎭 Effects System
+The MCP includes a powerful effects engine:
+- **Pre-built effects** for common scenarios (alerts, ambiance, parties)
+- **Custom sequences** for precise choreography
+- **Parallel execution** - run multiple effects simultaneously
+- **Loop support** - effects can repeat indefinitely
+- See [EFFECTS_GUIDE.md](EFFECTS_GUIDE.md) for detailed examples
+
+### 🔄 Real-time Events
+Subscribe to live updates from your Hue system:
+- Motion sensor triggers
+- Button presses
+- Light state changes
+- Temperature updates
 
 ## Troubleshooting
 
@@ -141,6 +210,20 @@ Run comprehensive test suite:
 # Set environment variables first
 go run test_comprehensive.go
 ```
+
+## Development Status
+
+This MCP server provides comprehensive coverage of the Philips Hue v2 API (90%+):
+- ✅ Complete light, group, scene, and room control
+- ✅ Full sensor integration
+- ✅ Real-time event streaming
+- ✅ Advanced effects and sequencing
+- ✅ Non-blocking asynchronous operations
+- 🚧 Entertainment streaming (DTLS foundation implemented, full streaming in progress)
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
