@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "hue": {
+      "command": "/Users/petegriffiths/code/go/src/hue-mcp/hue-mcp",
+      "env": {
+        "HUE_BRIDGE_IP": "192.168.87.51",
+        "HUE_USERNAME": "your-hue-username-here"
+      }
+    }
+  }
+}

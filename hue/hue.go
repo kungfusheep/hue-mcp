@@ -396,6 +396,31 @@ func (c *Client) IdentifyLight(ctx context.Context, id string) error {
 	})
 }
 
+// GetAllSupportedEffects returns all effects supported by any light in the system
+func (c *Client) GetAllSupportedEffects(ctx context.Context) ([]string, error) {
+	lights, err := c.GetLights(ctx)
+	if err != nil {
+		return nil, err
+	}
+	
+	effectsMap := make(map[string]bool)
+	
+	for _, light := range lights {
+		if light.Effects != nil {
+			for _, effect := range light.Effects.EffectValues {
+				effectsMap[effect] = true
+			}
+		}
+	}
+	
+	var effects []string
+	for effect := range effectsMap {
+		effects = append(effects, effect)
+	}
+	
+	return effects, nil
+}
+
 // Color conversion helpers
 
 func hexToXY(hex string) (float64, float64) {

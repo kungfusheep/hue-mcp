@@ -4,19 +4,21 @@ package effects
 const (
 	None       = "no_effect"
 	Candle     = "candle"
-	Fireplace  = "fireplace"
-	Colorloop  = "colorloop"
-	Sunrise    = "sunrise"
-	Sparkle    = "sparkle"
-	Glisten    = "glisten"
-	Opal       = "opal"
+	Fire       = "fire"
 	Prism      = "prism"
+	Sparkle    = "sparkle"
+	Opal       = "opal"
+	Glisten    = "glisten"
+	Underwater = "underwater"
+	Cosmos     = "cosmos"
+	Sunbeam    = "sunbeam"
+	Enchant    = "enchant"
 )
 
 // IsValid checks if an effect name is valid
 func IsValid(effect string) bool {
 	switch effect {
-	case None, Candle, Fireplace, Colorloop, Sunrise, Sparkle, Glisten, Opal, Prism:
+	case None, Candle, Fire, Prism, Sparkle, Opal, Glisten, Underwater, Cosmos, Sunbeam, Enchant:
 		return true
 	default:
 		return false
@@ -28,13 +30,15 @@ func GetAllEffects() []string {
 	return []string{
 		None,
 		Candle,
-		Fireplace,
-		Colorloop,
-		Sunrise,
-		Sparkle,
-		Glisten,
-		Opal,
+		Fire,
 		Prism,
+		Sparkle,
+		Opal,
+		Glisten,
+		Underwater,
+		Cosmos,
+		Sunbeam,
+		Enchant,
 	}
 }
 
@@ -45,20 +49,24 @@ func GetDescription(effect string) string {
 		return "No effect"
 	case Candle:
 		return "Simulates a flickering candle"
-	case Fireplace:
+	case Fire:
 		return "Simulates a cozy fireplace"
-	case Colorloop:
-		return "Cycles through all colors"
-	case Sunrise:
-		return "Simulates a sunrise"
-	case Sparkle:
-		return "Sparkling light effect"
-	case Glisten:
-		return "Glistening light effect"
-	case Opal:
-		return "Opal color shifts"
 	case Prism:
 		return "Prism color effects"
+	case Sparkle:
+		return "Sparkling light effect"
+	case Opal:
+		return "Opal color shifts"
+	case Glisten:
+		return "Glistening light effect"
+	case Underwater:
+		return "Underwater bubble effect"
+	case Cosmos:
+		return "Cosmic space effect"
+	case Sunbeam:
+		return "Warm sunbeam effect"
+	case Enchant:
+		return "Magical enchanted effect"
 	default:
 		return "Unknown effect"
 	}

@@ -158,13 +158,21 @@ func registerSceneTools(srv *server.MCPServer, client *hue.Client) {
 
 // registerEffectTools adds native effect tools
 func registerEffectTools(srv *server.MCPServer, client *hue.Client) {
+	// Get supported effects dynamically
+	ctx := context.Background()
+	supportedEffects, err := client.GetAllSupportedEffects(ctx)
+	if err != nil {
+		log.Printf("Warning: Could not get supported effects, using defaults: %v", err)
+		supportedEffects = effects.GetAllEffects()
+	}
+
 	// Set effect on light
 	lightEffectTool := mcp.NewTool("light_effect",
 		mcp.WithDescription("Set a dynamic effect on a light"),
 		mcp.WithString("light_id", mcp.Required(), mcp.Description("The ID of the light")),
 		mcp.WithString("effect", mcp.Required(), 
 			mcp.Description("Effect to apply"),
-			mcp.Enum(effects.None, effects.Candle, effects.Fireplace, effects.Colorloop, effects.Sunrise, effects.Sparkle, effects.Glisten, effects.Opal, effects.Prism),
+			mcp.Enum(supportedEffects...),
 		),
 		mcp.WithNumber("duration", mcp.Description("Duration in seconds (0 for infinite)")),
 	)
@@ -176,7 +184,7 @@ func registerEffectTools(srv *server.MCPServer, client *hue.Client) {
 		mcp.WithString("group_id", mcp.Required(), mcp.Description("The ID of the group")),
 		mcp.WithString("effect", mcp.Required(),
 			mcp.Description("Effect to apply"),
-			mcp.Enum(effects.None, effects.Candle, effects.Fireplace, effects.Colorloop, effects.Sunrise, effects.Sparkle, effects.Glisten, effects.Opal, effects.Prism),
+			mcp.Enum(supportedEffects...),
 		),
 		mcp.WithNumber("duration", mcp.Description("Duration in seconds (0 for infinite)")),
 	)

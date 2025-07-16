@@ -125,9 +125,8 @@ func HandleLightEffect(client *hue.Client) server.ToolHandlerFunc {
 			return mcp.NewToolResultError("effect is required"), nil
 		}
 
-		if !effects.IsValid(effect) {
-			return mcp.NewToolResultError(fmt.Sprintf("Invalid effect. Valid effects: %v", effects.GetAllEffects())), nil
-		}
+		// Note: We don't validate effects here anymore since they're dynamically generated
+		// The MCP enum validation will handle this at the protocol level
 
 		duration := 0
 		if d, ok := args["duration"].(float64); ok {
@@ -262,9 +261,8 @@ func HandleGroupEffect(client *hue.Client) server.ToolHandlerFunc {
 			return mcp.NewToolResultError("effect is required"), nil
 		}
 
-		if !effects.IsValid(effect) {
-			return mcp.NewToolResultError(fmt.Sprintf("Invalid effect. Valid effects: %v", effects.GetAllEffects())), nil
-		}
+		// Note: We don't validate effects here anymore since they're dynamically generated
+		// The MCP enum validation will handle this at the protocol level
 
 		duration := 0
 		if d, ok := args["duration"].(float64); ok {
