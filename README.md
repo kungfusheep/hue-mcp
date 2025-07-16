@@ -1,164 +1,147 @@
 # Philips Hue v2 MCP Server
 
-A Model Context Protocol (MCP) server that provides comprehensive control over Philips Hue lights using the v2 API. This server unlocks native lighting effects like candle, fireplace, and other dynamic scenes not available in v1 API implementations.
+A Model Context Protocol (MCP) server for Philips Hue v2 API, enabling native lighting effects and comprehensive control for your AI agents.
 
 ## Features
 
-- **Native Effects**: Candle, Fireplace, Colorloop, Sunrise, Sparkle, and more
-- **Full Light Control**: On/off, brightness, color, effects for individual lights
-- **Group Management**: Control entire rooms or zones synchronously  
-- **Scene Support**: List, activate, and create scenes
-- **System Tools**: Bridge info, light discovery, identification
-- **90%+ v2 API Coverage**: Comprehensive implementation of Hue v2 endpoints
+- ✅ **Native v2 Effects**: Candle, fire, sparkle, cosmos, and more!
+- ✅ **Comprehensive Light Control**: On/off, brightness, color, effects
+- ✅ **Group Management**: Control entire rooms at once
+- ✅ **Scene Support**: Activate and manage scenes
+- ✅ **Sensor Integration**: Motion, temperature, light level, buttons
+- ✅ **Device Discovery**: Automatic detection of all Hue devices
+- ✅ **Batch Commands**: Efficient multi-command execution
+- ✅ **Real-time Identification**: Make lights blink for identification
 
-## Installation
+## Prerequisites
 
-### Prerequisites
+1. Go 1.21 or later
+2. Philips Hue Bridge with v2 API support
+3. Hue Bridge API username (see setup below)
 
-- Go 1.21 or later
-- Philips Hue Bridge with API access
-- Your Hue bridge IP address and username
+## Setup
 
-### Building from Source
+### 1. Get Your Hue Bridge IP and Username
 
+Find your bridge IP:
 ```bash
-git clone https://github.com/kungfusheep/hue-mcp.git
-cd hue-mcp
-go build -o hue-mcp .
+# On macOS/Linux
+arp -a | grep -i philips
+
+# Or visit https://discovery.meethue.com/
 ```
 
-## Configuration
+Get an API username:
+```bash
+# Press the link button on your Hue Bridge, then run:
+curl -X POST http://<BRIDGE_IP>/api -H "Content-Type: application/json" -d '{"devicetype":"hue_mcp#claude"}'
+```
 
-Set the following environment variables:
+### 2. Build the MCP Server
+
+```bash
+# Clone the repository
+git clone https://github.com/kungfusheep/hue-mcp.git
+cd hue-mcp
+
+# Build the binary
+go build -o hue-mcp
+```
+
+### 3. Set Environment Variables
 
 ```bash
 export HUE_BRIDGE_IP="192.168.1.100"  # Your bridge IP
-export HUE_USERNAME="your-hue-username" # Your API username
+export HUE_USERNAME="your-api-username-here"
 ```
 
-### Getting a Hue Username
+### 4. Configure Claude Desktop (example)
 
-If you don't have a username yet:
+Add to your Claude Desktop configuration file:
 
-1. Press the link button on your Hue bridge
-2. Within 30 seconds, run:
-```bash
-curl -X POST http://<bridge-ip>/api -H "Content-Type: application/json" -d '{"devicetype":"hue_mcp_server"}'
-```
-3. Use the returned username
-
-## Usage with Claude Desktop
-
-Add to your Claude Desktop configuration (`~/Library/Application Support/Claude/claude_desktop_config.json`):
+**macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+**Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
 
 ```json
 {
   "mcpServers": {
     "hue": {
-      "command": "/path/to/hue-mcp",
+      "command": "/absolute/path/to/hue-mcp",
       "env": {
-        "HUE_BRIDGE_IP": "192.168.1.100",
-        "HUE_USERNAME": "your-username"
+        "HUE_BRIDGE_IP": "YOUR_BRIDGE_IP",
+        "HUE_USERNAME": "YOUR_API_USERNAME"
       }
     }
   }
 }
 ```
 
+### 5. Restart Claude Desktop
+
+Quit and restart Claude Desktop to load the new configuration.
+
+## Usage Examples
+
+Once configured, you can ask Claude to:
+
+- "Turn on all office lights"
+- "Set the living room to candle effect"
+- "Dim bedroom lights to 20%"
+- "Make the kitchen lights blue"
+- "Create a fire effect in the office"
+- "List all motion sensors"
+- "Show me all available scenes"
+- "Identify which light is Office 1"
+- "Turn on candle effect on all office lights at once" (uses batch commands)
+
 ## Available Tools
 
-### Light Control
-- `light_on` - Turn a light on
-- `light_off` - Turn a light off
+- `list_lights` - Discover all lights
+- `light_on/off` - Control individual lights
 - `light_brightness` - Set brightness (0-100%)
-- `light_color` - Set color (hex code or name)
-- `light_effect` - Apply effects (candle, fireplace, etc.)
-
-### Group Control
-- `group_on` - Turn a group on
-- `group_off` - Turn a group off
+- `light_color` - Set color (hex or name)
+- `light_effect` - Apply effects (candle, fire, sparkle, etc.)
+- `list_groups` - Discover all groups/rooms
+- `group_on/off` - Control entire groups
 - `group_brightness` - Set group brightness
 - `group_color` - Set group color
-- `group_effect` - Apply effects to group
-
-### Scene Management
-- `list_scenes` - List all available scenes
+- `group_effect` - Apply effects to groups
+- `list_scenes` - List available scenes
 - `activate_scene` - Activate a scene
-- `create_scene` - Create a new scene
+- `list_rooms` - Discover all rooms with devices
+- `list_motion_sensors` - Get motion sensor states
+- `list_temperature_sensors` - Get temperature readings
+- `identify_light` - Make a light breathe for identification
+- `batch_commands` - Execute multiple commands efficiently
 
-### Room & Zone Management
-- `list_rooms` - List all rooms with their lights
-- `list_zones` - List all zones
-- `list_devices` - List all devices with details
-- `get_device` - Get detailed device information
+## Troubleshooting
 
-### Sensor Tools
-- `list_motion_sensors` - List motion sensors and their states
-- `list_temperature_sensors` - List temperature sensors with readings
-- `list_light_level_sensors` - List light level sensors with lux readings
-- `list_buttons` - List buttons (dimmer switches) and last events
+1. **"Failed to connect to Hue bridge"**
+   - Verify your bridge IP is correct
+   - Ensure your API username is valid
+   - Check you're on the same network as the bridge
 
-### Entertainment
-- `list_entertainment` - List entertainment configurations
-- `start_entertainment` - Start entertainment mode
-- `stop_entertainment` - Stop entertainment mode
+2. **"Light/group not found"**
+   - Use `list_lights` or `list_groups` to see available IDs
+   - Light names are case-sensitive
 
-### System Tools
-- `list_lights` - List all lights with current states
-- `list_groups` - List all groups/rooms
-- `get_light_state` - Get detailed light state
-- `bridge_info` - Get bridge information
-- `identify_light` - Make a light blink for identification
-
-## Examples
-
-In Claude Desktop:
-
-```
-"Turn on the candle effect in my office"
-"Set all lights to warm white at 50% brightness"
-"Create a cozy fireplace atmosphere"
-"List all my lights and their current states"
-```
-
-## Supported Effects
-
-- `no_effect` - Disable effects
-- `candle` - Flickering candle effect
-- `fireplace` - Cozy fireplace simulation
-- `colorloop` - Cycle through colors
-- `sunrise` - Sunrise simulation
-- `sparkle` - Sparkling effect
-- `glisten` - Glistening effect
-- `opal` - Opal color shifts
-- `prism` - Prism color effects
+3. **Effects not working**
+   - Not all lights support all effects
+   - Use dynamic effect discovery to see supported effects
 
 ## Development
 
-### Running Tests
-
+Run tests:
 ```bash
 go test ./...
 ```
 
-### Project Structure
-
-```
-hue-mcp/
-├── main.go           # Entry point and MCP server setup
-├── hue/
-│   ├── hue.go       # Hue v2 API client
-│   └── types.go     # API types and models
-├── mcp/
-│   └── mcp.go       # MCP tool handlers
-└── effects/
-    └── effects.go   # Effect definitions
+Run comprehensive test suite:
+```bash
+# Set environment variables first
+go run test_comprehensive.go
 ```
 
 ## License
 
-MIT
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
+Apache 2.0 Licence
