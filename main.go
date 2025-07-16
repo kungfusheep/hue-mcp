@@ -58,6 +58,9 @@ func main() {
 	registerSceneTools(srv, hueClient)
 	registerEffectTools(srv, hueClient)
 	registerSystemTools(srv, hueClient)
+	registerRoomTools(srv, hueClient)
+	registerSensorTools(srv, hueClient)
+	registerEntertainmentTools(srv, hueClient)
 
 	// Start server in stdio mode for Claude Desktop
 	log.Println("Starting Hue MCP server...")
@@ -213,4 +216,82 @@ func registerSystemTools(srv *server.MCPServer, client *hue.Client) {
 		mcp.WithString("light_id", mcp.Required(), mcp.Description("The ID of the light")),
 	)
 	srv.AddTool(identifyLightTool, mcpserver.HandleIdentifyLight(client))
+}
+
+// registerRoomTools adds room and zone control tools
+func registerRoomTools(srv *server.MCPServer, client *hue.Client) {
+	// List rooms
+	listRoomsTool := mcp.NewTool("list_rooms",
+		mcp.WithDescription("List all rooms with their lights"),
+	)
+	srv.AddTool(listRoomsTool, mcpserver.HandleListRooms(client))
+
+	// List zones
+	listZonesTool := mcp.NewTool("list_zones",
+		mcp.WithDescription("List all zones"),
+	)
+	srv.AddTool(listZonesTool, mcpserver.HandleListZones(client))
+
+	// List devices
+	listDevicesTool := mcp.NewTool("list_devices",
+		mcp.WithDescription("List all devices with their details"),
+	)
+	srv.AddTool(listDevicesTool, mcpserver.HandleListDevices(client))
+
+	// Get device details
+	getDeviceTool := mcp.NewTool("get_device",
+		mcp.WithDescription("Get detailed information about a device"),
+		mcp.WithString("device_id", mcp.Required(), mcp.Description("The ID of the device")),
+	)
+	srv.AddTool(getDeviceTool, mcpserver.HandleGetDevice(client))
+}
+
+// registerSensorTools adds sensor reading tools
+func registerSensorTools(srv *server.MCPServer, client *hue.Client) {
+	// Motion sensors
+	listMotionTool := mcp.NewTool("list_motion_sensors",
+		mcp.WithDescription("List all motion sensors and their states"),
+	)
+	srv.AddTool(listMotionTool, mcpserver.HandleListMotionSensors(client))
+
+	// Temperature sensors
+	listTempTool := mcp.NewTool("list_temperature_sensors",
+		mcp.WithDescription("List all temperature sensors and their readings"),
+	)
+	srv.AddTool(listTempTool, mcpserver.HandleListTemperatureSensors(client))
+
+	// Light level sensors
+	listLightLevelTool := mcp.NewTool("list_light_level_sensors",
+		mcp.WithDescription("List all light level sensors and their readings"),
+	)
+	srv.AddTool(listLightLevelTool, mcpserver.HandleListLightLevelSensors(client))
+
+	// Buttons
+	listButtonsTool := mcp.NewTool("list_buttons",
+		mcp.WithDescription("List all buttons (dimmer switches) and their last events"),
+	)
+	srv.AddTool(listButtonsTool, mcpserver.HandleListButtons(client))
+}
+
+// registerEntertainmentTools adds entertainment configuration tools
+func registerEntertainmentTools(srv *server.MCPServer, client *hue.Client) {
+	// List entertainment configurations
+	listEntTool := mcp.NewTool("list_entertainment",
+		mcp.WithDescription("List all entertainment configurations"),
+	)
+	srv.AddTool(listEntTool, mcpserver.HandleListEntertainment(client))
+
+	// Start entertainment
+	startEntTool := mcp.NewTool("start_entertainment",
+		mcp.WithDescription("Start entertainment mode for a configuration"),
+		mcp.WithString("config_id", mcp.Required(), mcp.Description("The ID of the entertainment configuration")),
+	)
+	srv.AddTool(startEntTool, mcpserver.HandleStartEntertainment(client))
+
+	// Stop entertainment
+	stopEntTool := mcp.NewTool("stop_entertainment",
+		mcp.WithDescription("Stop entertainment mode for a configuration"),
+		mcp.WithString("config_id", mcp.Required(), mcp.Description("The ID of the entertainment configuration")),
+	)
+	srv.AddTool(stopEntTool, mcpserver.HandleStopEntertainment(client))
 }

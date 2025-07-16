@@ -86,6 +86,23 @@ Add to your Claude Desktop configuration (`~/Library/Application Support/Claude/
 - `activate_scene` - Activate a scene
 - `create_scene` - Create a new scene
 
+### Room & Zone Management
+- `list_rooms` - List all rooms with their lights
+- `list_zones` - List all zones
+- `list_devices` - List all devices with details
+- `get_device` - Get detailed device information
+
+### Sensor Tools
+- `list_motion_sensors` - List motion sensors and their states
+- `list_temperature_sensors` - List temperature sensors with readings
+- `list_light_level_sensors` - List light level sensors with lux readings
+- `list_buttons` - List buttons (dimmer switches) and last events
+
+### Entertainment
+- `list_entertainment` - List entertainment configurations
+- `start_entertainment` - Start entertainment mode
+- `stop_entertainment` - Stop entertainment mode
+
 ### System Tools
 - `list_lights` - List all lights with current states
 - `list_groups` - List all groups/rooms
