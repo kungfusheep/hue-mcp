@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"strings"
 	"time"
 )
@@ -34,7 +35,7 @@ type EventData struct {
 	Owner  *ResourceIdentifier `json:"owner,omitempty"`
 	
 	// Light events
-	On               *On               `json:"on,omitempty"`
+	On               *OnState          `json:"on,omitempty"`
 	Dimming          *Dimming          `json:"dimming,omitempty"`
 	Color            *Color            `json:"color,omitempty"`
 	ColorTemperature *ColorTemperature `json:"color_temperature,omitempty"`
@@ -127,10 +128,13 @@ func (es *EventStream) connect(ctx context.Context) {
 func (es *EventStream) streamEvents(ctx context.Context) error {
 	url := fmt.Sprintf("https://%s/eventstream/clip/v2", es.client.bridgeIP)
 	
-	req, err := es.client.newRequest(ctx, "GET", url, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		return err
 	}
+	
+	// Add authentication
+	req.Header.Set("hue-application-key", es.client.username)
 	
 	// SSE requires these headers
 	req.Header.Set("Accept", "text/event-stream")

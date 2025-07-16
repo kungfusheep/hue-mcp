@@ -62,6 +62,8 @@ func main() {
 	registerSensorTools(srv, hueClient)
 	registerEntertainmentTools(srv, hueClient)
 	registerBatchTools(srv, hueClient)
+	registerEventTools(srv, hueClient)
+	registerCRUDTools(srv, hueClient)
 
 	// Start server in stdio mode for Claude Desktop
 	log.Println("Starting Hue MCP server...")
@@ -314,4 +316,107 @@ func registerBatchTools(srv *server.MCPServer, client *hue.Client) {
 		mcp.WithNumber("delay_ms", mcp.Description("Delay between commands in milliseconds (default: 100)")),
 	)
 	srv.AddTool(batchTool, mcpserver.HandleBatchCommands(client))
+}
+
+// registerEventTools adds event streaming tools
+func registerEventTools(srv *server.MCPServer, client *hue.Client) {
+	// Initialize event manager
+	mcpserver.InitEventManager(client)
+	
+	// Start event stream
+	startEventTool := mcp.NewTool("start_event_stream",
+		mcp.WithDescription("Start real-time event streaming from Hue bridge"),
+		mcp.WithString("filter", mcp.Description("Comma-separated event types to filter (e.g., 'light,motion,button')")),
+	)
+	srv.AddTool(startEventTool, mcpserver.HandleStartEventStream(client))
+	
+	// Stop event stream
+	stopEventTool := mcp.NewTool("stop_event_stream",
+		mcp.WithDescription("Stop the event stream"),
+	)
+	srv.AddTool(stopEventTool, mcpserver.HandleStopEventStream(client))
+	
+	// Get recent events
+	recentEventsTool := mcp.NewTool("get_recent_events",
+		mcp.WithDescription("Get recent events from the stream"),
+		mcp.WithNumber("limit", mcp.Description("Maximum number of events to return (default: 50)")),
+		mcp.WithString("type", mcp.Description("Filter by event type (e.g., 'light', 'motion', 'button')")),
+	)
+	srv.AddTool(recentEventsTool, mcpserver.HandleGetRecentEvents(client))
+	
+	// Get stream status
+	streamStatusTool := mcp.NewTool("get_event_stream_status",
+		mcp.WithDescription("Get the current status of the event stream"),
+	)
+	srv.AddTool(streamStatusTool, mcpserver.HandleGetEventStreamStatus(client))
+}
+
+// registerCRUDTools adds create, update, delete tools
+func registerCRUDTools(srv *server.MCPServer, client *hue.Client) {
+	// Scene CRUD
+	createSceneFromStateTool := mcp.NewTool("create_scene_from_state",
+		mcp.WithDescription("Create a new scene capturing current light states"),
+		mcp.WithString("name", mcp.Required(), mcp.Description("Name for the scene")),
+		mcp.WithString("group_id", mcp.Required(), mcp.Description("Group/room ID to capture")),
+	)
+	srv.AddTool(createSceneFromStateTool, mcpserver.HandleCreateSceneFromState(client))
+	
+	updateSceneTool := mcp.NewTool("update_scene",
+		mcp.WithDescription("Update a scene's metadata"),
+		mcp.WithString("scene_id", mcp.Required(), mcp.Description("Scene ID to update")),
+		mcp.WithString("name", mcp.Description("New name for the scene")),
+		mcp.WithNumber("speed", mcp.Description("Transition speed (0.0-1.0)")),
+	)
+	srv.AddTool(updateSceneTool, mcpserver.HandleUpdateScene(client))
+	
+	deleteSceneTool := mcp.NewTool("delete_scene",
+		mcp.WithDescription("Delete a scene"),
+		mcp.WithString("scene_id", mcp.Required(), mcp.Description("Scene ID to delete")),
+	)
+	srv.AddTool(deleteSceneTool, mcpserver.HandleDeleteScene(client))
+	
+	// Group management
+	addLightToGroupTool := mcp.NewTool("add_light_to_group",
+		mcp.WithDescription("Add a light to a group/room"),
+		mcp.WithString("group_id", mcp.Required(), mcp.Description("Group ID")),
+		mcp.WithString("light_id", mcp.Required(), mcp.Description("Light ID to add")),
+	)
+	srv.AddTool(addLightToGroupTool, mcpserver.HandleAddLightToGroup(client))
+	
+	removeLightFromGroupTool := mcp.NewTool("remove_light_from_group",
+		mcp.WithDescription("Remove a light from a group/room"),
+		mcp.WithString("group_id", mcp.Required(), mcp.Description("Group ID")),
+		mcp.WithString("light_id", mcp.Required(), mcp.Description("Light ID to remove")),
+	)
+	srv.AddTool(removeLightFromGroupTool, mcpserver.HandleRemoveLightFromGroup(client))
+	
+	// Zone CRUD
+	createZoneTool := mcp.NewTool("create_zone",
+		mcp.WithDescription("Create a new zone with specified lights"),
+		mcp.WithString("name", mcp.Required(), mcp.Description("Name for the zone")),
+		mcp.WithString("light_ids", mcp.Required(), mcp.Description("Comma-separated light IDs")),
+	)
+	srv.AddTool(createZoneTool, mcpserver.HandleCreateZone(client))
+	
+	updateZoneTool := mcp.NewTool("update_zone",
+		mcp.WithDescription("Update a zone"),
+		mcp.WithString("zone_id", mcp.Required(), mcp.Description("Zone ID to update")),
+		mcp.WithString("name", mcp.Description("New name for the zone")),
+		mcp.WithString("light_ids", mcp.Description("Comma-separated light IDs to set")),
+	)
+	srv.AddTool(updateZoneTool, mcpserver.HandleUpdateZone(client))
+	
+	deleteZoneTool := mcp.NewTool("delete_zone",
+		mcp.WithDescription("Delete a zone"),
+		mcp.WithString("zone_id", mcp.Required(), mcp.Description("Zone ID to delete")),
+	)
+	srv.AddTool(deleteZoneTool, mcpserver.HandleDeleteZone(client))
+	
+	// Room update
+	updateRoomTool := mcp.NewTool("update_room",
+		mcp.WithDescription("Update a room's name"),
+		mcp.WithString("room_id", mcp.Required(), mcp.Description("Room ID to update")),
+		mcp.WithString("name", mcp.Required(), mcp.Description("New name for the room")),
+	)
+	srv.AddTool(updateRoomTool, mcpserver.HandleUpdateRoom(client))
 }

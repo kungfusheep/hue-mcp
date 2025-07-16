@@ -201,4 +201,31 @@ type SceneCreate struct {
 	Metadata Metadata           `json:"metadata"`
 	Group    ResourceIdentifier `json:"group"`
 	Actions  []SceneAction      `json:"actions"`
+	Speed    float64            `json:"speed,omitempty"`
+}
+
+// SceneUpdate represents parameters for updating a scene
+type SceneUpdate struct {
+	Metadata *Metadata      `json:"metadata,omitempty"`
+	Actions  []SceneAction  `json:"actions,omitempty"`
+	Speed    *float64       `json:"speed,omitempty"`
+}
+
+// RoomUpdate represents parameters for updating a room
+type RoomUpdate struct {
+	Metadata *Metadata            `json:"metadata,omitempty"`
+	Children []ResourceIdentifier `json:"children,omitempty"`
+}
+
+// ZoneUpdate represents parameters for updating a zone
+type ZoneUpdate struct {
+	Metadata *Metadata            `json:"metadata,omitempty"`
+	Children []ResourceIdentifier `json:"children,omitempty"`
+}
+
+// ZoneCreate represents parameters for creating a zone
+type ZoneCreate struct {
+	Type     string               `json:"type"`
+	Metadata Metadata             `json:"metadata"`
+	Children []ResourceIdentifier `json:"children"`
 }
