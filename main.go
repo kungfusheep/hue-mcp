@@ -61,6 +61,7 @@ func main() {
 	registerRoomTools(srv, hueClient)
 	registerSensorTools(srv, hueClient)
 	registerEntertainmentTools(srv, hueClient)
+	registerBatchTools(srv, hueClient)
 
 	// Start server in stdio mode for Claude Desktop
 	log.Println("Starting Hue MCP server...")
@@ -302,4 +303,15 @@ func registerEntertainmentTools(srv *server.MCPServer, client *hue.Client) {
 		mcp.WithString("config_id", mcp.Required(), mcp.Description("The ID of the entertainment configuration")),
 	)
 	srv.AddTool(stopEntTool, mcpserver.HandleStopEntertainment(client))
+}
+
+// registerBatchTools adds batch request capability for efficiency
+func registerBatchTools(srv *server.MCPServer, client *hue.Client) {
+	// Batch commands
+	batchTool := mcp.NewTool("batch_commands",
+		mcp.WithDescription("Execute multiple commands in a single request for efficiency. Commands format: JSON array of {action, target_id, value, duration}"),
+		mcp.WithString("commands", mcp.Required(), mcp.Description("JSON array of commands: [{\"action\":\"light_on\",\"target_id\":\"light_id\"}, {\"action\":\"light_brightness\",\"target_id\":\"light_id\",\"value\":\"75\"}]")),
+		mcp.WithNumber("delay_ms", mcp.Description("Delay between commands in milliseconds (default: 100)")),
+	)
+	srv.AddTool(batchTool, mcpserver.HandleBatchCommands(client))
 }

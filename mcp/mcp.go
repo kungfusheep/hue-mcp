@@ -2,9 +2,11 @@ package mcp
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/kungfusheep/hue-mcp/effects"
 	"github.com/kungfusheep/hue-mcp/hue"
@@ -516,4 +518,218 @@ func isValidHexColor(hex string) bool {
 	
 	_, err := strconv.ParseUint(hex, 16, 32)
 	return err == nil
+}
+
+// BatchCommand represents a single command in a batch
+type BatchCommand struct {
+	Action   string  `json:"action"`
+	TargetID string  `json:"target_id"`
+	Value    string  `json:"value,omitempty"`
+	Duration float64 `json:"duration,omitempty"`
+}
+
+// HandleBatchCommands returns a handler for executing multiple commands in batch
+func HandleBatchCommands(client *hue.Client) server.ToolHandlerFunc {
+	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		args := request.GetArguments()
+		
+		// Get commands JSON string
+		commandsJSON, ok := args["commands"].(string)
+		if !ok {
+			return mcp.NewToolResultError("commands JSON string is required"), nil
+		}
+
+		// Parse commands JSON
+		var commands []BatchCommand
+		if err := json.Unmarshal([]byte(commandsJSON), &commands); err != nil {
+			return mcp.NewToolResultError(fmt.Sprintf("Failed to parse commands JSON: %v", err)), nil
+		}
+
+		// Get delay between commands (default 100ms)
+		delayMs := 100
+		if d, ok := args["delay_ms"].(float64); ok {
+			delayMs = int(d)
+		}
+
+		var results []string
+		var errors []string
+
+		// Process each command
+		for i, cmd := range commands {
+			// Execute the command
+			result, err := executeBatchCommand(ctx, client, cmd.Action, cmd.TargetID, cmd.Value, int(cmd.Duration))
+			if err != nil {
+				errors = append(errors, fmt.Sprintf("Command %d (%s): %v", i, cmd.Action, err))
+			} else {
+				results = append(results, fmt.Sprintf("Command %d: %s", i, result))
+			}
+
+			// Add delay between commands (except for the last one)
+			if i < len(commands)-1 && delayMs > 0 {
+				time.Sleep(time.Duration(delayMs) * time.Millisecond)
+			}
+		}
+
+		// Build response
+		var response strings.Builder
+		response.WriteString(fmt.Sprintf("Batch execution completed: %d commands processed\n", len(commands)))
+		
+		if len(results) > 0 {
+			response.WriteString("\nSuccessful commands:\n")
+			for _, result := range results {
+				response.WriteString(fmt.Sprintf("✅ %s\n", result))
+			}
+		}
+
+		if len(errors) > 0 {
+			response.WriteString("\nFailed commands:\n")
+			for _, error := range errors {
+				response.WriteString(fmt.Sprintf("❌ %s\n", error))
+			}
+		}
+
+		return mcp.NewToolResultText(response.String()), nil
+	}
+}
+
+// executeBatchCommand executes a single command within a batch
+func executeBatchCommand(ctx context.Context, client *hue.Client, action, targetID, value string, duration int) (string, error) {
+	switch action {
+	case "light_on":
+		err := client.TurnOnLight(ctx, targetID)
+		if err != nil {
+			return "", err
+		}
+		return fmt.Sprintf("Light %s turned on", targetID), nil
+
+	case "light_off":
+		err := client.TurnOffLight(ctx, targetID)
+		if err != nil {
+			return "", err
+		}
+		return fmt.Sprintf("Light %s turned off", targetID), nil
+
+	case "light_brightness":
+		brightness, err := strconv.ParseFloat(value, 64)
+		if err != nil {
+			return "", fmt.Errorf("invalid brightness value: %s", value)
+		}
+		if brightness < 0 || brightness > 100 {
+			return "", fmt.Errorf("brightness must be between 0 and 100")
+		}
+		err = client.SetLightBrightness(ctx, targetID, brightness)
+		if err != nil {
+			return "", err
+		}
+		return fmt.Sprintf("Light %s brightness set to %.0f%%", targetID, brightness), nil
+
+	case "light_color":
+		if value == "" {
+			return "", fmt.Errorf("color value is required")
+		}
+		hexColor := namedColorToHex(value)
+		if hexColor == "" {
+			hexColor = value
+		}
+		if !isValidHexColor(hexColor) {
+			return "", fmt.Errorf("invalid color format: %s", value)
+		}
+		err := client.SetLightColor(ctx, targetID, hexColor)
+		if err != nil {
+			return "", err
+		}
+		return fmt.Sprintf("Light %s color set to %s", targetID, value), nil
+
+	case "light_effect":
+		if value == "" {
+			return "", fmt.Errorf("effect value is required")
+		}
+		err := client.SetLightEffect(ctx, targetID, value, duration)
+		if err != nil {
+			return "", err
+		}
+		desc := effects.GetDescription(value)
+		result := fmt.Sprintf("Light %s effect set to %s - %s", targetID, value, desc)
+		if duration > 0 {
+			result += fmt.Sprintf(" (duration: %d seconds)", duration)
+		}
+		return result, nil
+
+	case "group_on":
+		err := client.TurnOnGroup(ctx, targetID)
+		if err != nil {
+			return "", err
+		}
+		return fmt.Sprintf("Group %s turned on", targetID), nil
+
+	case "group_off":
+		err := client.TurnOffGroup(ctx, targetID)
+		if err != nil {
+			return "", err
+		}
+		return fmt.Sprintf("Group %s turned off", targetID), nil
+
+	case "group_brightness":
+		brightness, err := strconv.ParseFloat(value, 64)
+		if err != nil {
+			return "", fmt.Errorf("invalid brightness value: %s", value)
+		}
+		if brightness < 0 || brightness > 100 {
+			return "", fmt.Errorf("brightness must be between 0 and 100")
+		}
+		err = client.SetGroupBrightness(ctx, targetID, brightness)
+		if err != nil {
+			return "", err
+		}
+		return fmt.Sprintf("Group %s brightness set to %.0f%%", targetID, brightness), nil
+
+	case "group_color":
+		if value == "" {
+			return "", fmt.Errorf("color value is required")
+		}
+		hexColor := namedColorToHex(value)
+		if hexColor == "" {
+			hexColor = value
+		}
+		if !isValidHexColor(hexColor) {
+			return "", fmt.Errorf("invalid color format: %s", value)
+		}
+		err := client.SetGroupColor(ctx, targetID, hexColor)
+		if err != nil {
+			return "", err
+		}
+		return fmt.Sprintf("Group %s color set to %s", targetID, value), nil
+
+	case "group_effect":
+		if value == "" {
+			return "", fmt.Errorf("effect value is required")
+		}
+		err := client.SetGroupEffect(ctx, targetID, value, duration)
+		if err != nil {
+			return "", err
+		}
+		desc := effects.GetDescription(value)
+		result := fmt.Sprintf("Group %s effect set to %s - %s", targetID, value, desc)
+		if duration > 0 {
+			result += fmt.Sprintf(" (duration: %d seconds)", duration)
+		}
+		return result, nil
+
+	case "activate_scene":
+		err := client.ActivateScene(ctx, targetID)
+		if err != nil {
+			return "", err
+		}
+		return fmt.Sprintf("Scene %s activated", targetID), nil
+
+	case "identify_light":
+		err := client.IdentifyLight(ctx, targetID)
+		if err != nil {
+			return "", err
+		}
+		return fmt.Sprintf("Light %s is blinking for identification", targetID), nil
+
+	default:
+		return "", fmt.Errorf("unknown action: %s", action)
+	}
 }
