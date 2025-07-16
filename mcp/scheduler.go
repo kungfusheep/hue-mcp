@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/kungfusheep/hue-mcp/hue"
@@ -212,14 +213,54 @@ func HandleAlertEffect(client *hue.Client) server.ToolHandlerFunc {
 	}
 }
 
-// HandleStopSequence stops a running sequence
+// HandleStopSequence stops one or more running sequences
 func HandleStopSequence(client *hue.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		args := request.GetArguments()
 		
+		// Try to get sequence_ids first (array format)
+		if sequenceIDsJSON, ok := args["sequence_ids"].(string); ok {
+			// Parse JSON array of IDs
+			var sequenceIDs []string
+			if err := json.Unmarshal([]byte(sequenceIDsJSON), &sequenceIDs); err != nil {
+				return mcp.NewToolResultError(fmt.Sprintf("Failed to parse sequence_ids JSON: %v", err)), nil
+			}
+			
+			// Stop all sequences
+			var stopped []string
+			var failed []string
+			
+			for _, id := range sequenceIDs {
+				err := globalScheduler.StopSequence(id)
+				if err != nil {
+					failed = append(failed, fmt.Sprintf("%s (%v)", id, err))
+				} else {
+					stopped = append(stopped, id)
+				}
+			}
+			
+			// Build response
+			var result strings.Builder
+			if len(stopped) > 0 {
+				result.WriteString(fmt.Sprintf("Stopped %d sequences:\n", len(stopped)))
+				for _, id := range stopped {
+					result.WriteString(fmt.Sprintf("✅ %s\n", id))
+				}
+			}
+			if len(failed) > 0 {
+				result.WriteString(fmt.Sprintf("\nFailed to stop %d sequences:\n", len(failed)))
+				for _, failure := range failed {
+					result.WriteString(fmt.Sprintf("❌ %s\n", failure))
+				}
+			}
+			
+			return mcp.NewToolResultText(result.String()), nil
+		}
+		
+		// Fall back to single sequence_id for backward compatibility
 		sequenceID, ok := args["sequence_id"].(string)
 		if !ok {
-			return mcp.NewToolResultError("sequence_id is required"), nil
+			return mcp.NewToolResultError("sequence_id or sequence_ids is required"), nil
 		}
 		
 		err := globalScheduler.StopSequence(sequenceID)

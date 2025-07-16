@@ -413,8 +413,9 @@ func registerSchedulerTools(srv *server.MCPServer, client *hue.Client) {
 
 	// Stop sequence
 	stopSequenceTool := mcp.NewTool("stop_sequence",
-		mcp.WithDescription("Stop any running light sequence or effect. Use list_sequences first to see active sequence IDs."),
-		mcp.WithString("sequence_id", mcp.Required(), mcp.Description("ID of the sequence to stop (get from list_sequences)")),
+		mcp.WithDescription("Stop one or more running light sequences or effects. Use list_sequences first to see active sequence IDs."),
+		mcp.WithString("sequence_id", mcp.Description("ID of a single sequence to stop (for backward compatibility)")),
+		mcp.WithString("sequence_ids", mcp.Description("JSON array of sequence IDs to stop, e.g. [\"seq1\",\"seq2\",\"seq3\"]")),
 	)
 	srv.AddTool(stopSequenceTool, mcpserver.HandleStopSequence(client))
 

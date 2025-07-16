@@ -145,7 +145,7 @@ Once configured, you can ask Claude to:
 ### Advanced Sequencing 🎨
 - `custom_sequence` - Build complex multi-step lighting choreography
 - `list_sequences` - View all running effects
-- `stop_sequence` - Stop a running effect
+- `stop_sequence` - Stop one or more running effects (supports batch stopping)
 
 ### Sensors & Events
 - `list_motion_sensors` - Get motion sensor states
