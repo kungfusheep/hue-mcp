@@ -305,6 +305,43 @@ func registerEntertainmentTools(srv *server.MCPServer, client *hue.Client) {
 		mcp.WithString("config_id", mcp.Required(), mcp.Description("The ID of the entertainment configuration")),
 	)
 	srv.AddTool(stopEntTool, mcpserver.HandleStopEntertainment(client))
+
+	// Start streaming
+	startStreamTool := mcp.NewTool("start_streaming",
+		mcp.WithDescription("Start UDP streaming for real-time color updates"),
+		mcp.WithString("config_id", mcp.Required(), mcp.Description("The ID of the entertainment configuration")),
+		mcp.WithString("update_rate_ms", mcp.Description("Update rate in milliseconds (default: 50)")),
+	)
+	srv.AddTool(startStreamTool, mcpserver.HandleStartStreaming(client))
+
+	// Stop streaming
+	stopStreamTool := mcp.NewTool("stop_streaming",
+		mcp.WithDescription("Stop UDP streaming"),
+		mcp.WithString("config_id", mcp.Required(), mcp.Description("The ID of the entertainment configuration")),
+	)
+	srv.AddTool(stopStreamTool, mcpserver.HandleStopStreaming(client))
+
+	// Send colors
+	sendColorsTool := mcp.NewTool("send_colors",
+		mcp.WithDescription("Send color updates to streaming lights"),
+		mcp.WithString("config_id", mcp.Required(), mcp.Description("The ID of the entertainment configuration")),
+		mcp.WithString("colors", mcp.Required(), mcp.Description("Colors in format: 'lightID1:r,g,b;lightID2:r,g,b' (RGB 0-255)")),
+	)
+	srv.AddTool(sendColorsTool, mcpserver.HandleSendColors(client))
+
+	// Streaming status
+	streamStatusTool := mcp.NewTool("streaming_status",
+		mcp.WithDescription("Get status of active streaming sessions"),
+	)
+	srv.AddTool(streamStatusTool, mcpserver.HandleStreamingStatus(client))
+
+	// Rainbow effect
+	rainbowTool := mcp.NewTool("rainbow_effect",
+		mcp.WithDescription("Create a rainbow effect on streaming lights"),
+		mcp.WithString("config_id", mcp.Required(), mcp.Description("The ID of the entertainment configuration")),
+		mcp.WithString("duration", mcp.Description("Duration in seconds (default: 10)")),
+	)
+	srv.AddTool(rainbowTool, mcpserver.HandleRainbowEffect(client))
 }
 
 // registerBatchTools adds batch request capability for efficiency
