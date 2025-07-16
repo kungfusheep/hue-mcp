@@ -44,6 +44,9 @@ func main() {
 		log.Fatalf("Failed to connect to Hue bridge: %v", err)
 	}
 
+	// Initialize scheduler
+	mcpserver.InitScheduler(hueClient)
+
 	// Create MCP server
 	srv := server.NewMCPServer(
 		"Philips Hue v2 MCP Server",
@@ -62,6 +65,7 @@ func main() {
 	registerSensorTools(srv, hueClient)
 	registerEntertainmentTools(srv, hueClient)
 	registerBatchTools(srv, hueClient)
+	registerSchedulerTools(srv, hueClient)
 	registerEventTools(srv, hueClient)
 	registerCRUDTools(srv, hueClient)
 
@@ -348,11 +352,84 @@ func registerEntertainmentTools(srv *server.MCPServer, client *hue.Client) {
 func registerBatchTools(srv *server.MCPServer, client *hue.Client) {
 	// Batch commands
 	batchTool := mcp.NewTool("batch_commands",
-		mcp.WithDescription("Execute multiple commands in a single request for efficiency. Commands format: JSON array of {action, target_id, value, duration}"),
-		mcp.WithString("commands", mcp.Required(), mcp.Description("JSON array of commands: [{\"action\":\"light_on\",\"target_id\":\"light_id\"}, {\"action\":\"light_brightness\",\"target_id\":\"light_id\",\"value\":\"75\"}]")),
-		mcp.WithNumber("delay_ms", mcp.Description("Delay between commands in milliseconds (default: 100)")),
+		mcp.WithDescription("Execute multiple lighting commands in sequence with timing control. By default runs asynchronously (returns immediately) so you can continue working while lights change. Perfect for creating simple animations or coordinated lighting changes across multiple lights."),
+		mcp.WithString("commands", mcp.Required(), mcp.Description("JSON array of commands. Example: [{\"action\":\"light_on\",\"target_id\":\"abc123\"}, {\"action\":\"light_color\",\"target_id\":\"abc123\",\"value\":\"#FF0000\"}, {\"action\":\"light_brightness\",\"target_id\":\"abc123\",\"value\":\"75\"}]")),
+		mcp.WithNumber("delay_ms", mcp.Description("Milliseconds to wait between each command - use for timing effects (default: 100)")),
+		mcp.WithBoolean("async", mcp.Description("Run in background (true) or wait for completion (false). Default true = non-blocking")),
 	)
 	srv.AddTool(batchTool, mcpserver.HandleBatchCommands(client))
+}
+
+// registerSchedulerTools adds scheduler and sequence tools
+func registerSchedulerTools(srv *server.MCPServer, client *hue.Client) {
+	// Flash effect
+	flashTool := mcp.NewTool("flash_effect",
+		mcp.WithDescription("Create a flashing/blinking effect on lights - great for alerts, notifications, or party effects. The light will flash on and off with your chosen color."),
+		mcp.WithString("target_id", mcp.Required(), mcp.Description("Light or group ID to flash")),
+		mcp.WithString("color", mcp.Description("Flash color in hex format, e.g. #FF0000 for red, #00FF00 for green (default: #FFFFFF white)")),
+		mcp.WithNumber("flash_count", mcp.Description("How many times to flash (default: 3)")),
+		mcp.WithNumber("flash_duration_ms", mcp.Description("How long each flash lasts in milliseconds - shorter = more strobe-like (default: 200)")),
+	)
+	srv.AddTool(flashTool, mcpserver.HandleFlashEffect(client))
+
+	// Pulse effect
+	pulseTool := mcp.NewTool("pulse_effect",
+		mcp.WithDescription("Create a smooth breathing/heartbeat effect by fading brightness up and down. Perfect for ambient lighting, meditation spaces, or subtle notifications."),
+		mcp.WithString("target_id", mcp.Required(), mcp.Description("Light or group ID to pulse")),
+		mcp.WithNumber("min_brightness", mcp.Description("How dim to go (0-100%, default: 10)")),
+		mcp.WithNumber("max_brightness", mcp.Description("How bright to go (0-100%, default: 100)")),
+		mcp.WithNumber("pulse_duration_ms", mcp.Description("Time for one complete pulse cycle in milliseconds - longer = slower breathing (default: 2000)")),
+		mcp.WithNumber("pulse_count", mcp.Description("Number of pulse cycles to perform (default: 5)")),
+	)
+	srv.AddTool(pulseTool, mcpserver.HandlePulseEffect(client))
+
+	// Color loop effect
+	colorLoopTool := mcp.NewTool("color_loop",
+		mcp.WithDescription("Cycle through multiple colors in a continuous loop. Create rainbow effects, team colors, seasonal themes, or any custom color sequence. Loops until stopped."),
+		mcp.WithString("target_id", mcp.Required(), mcp.Description("Light or group ID to animate")),
+		mcp.WithString("colors", mcp.Description("JSON array of hex colors to cycle through, e.g. [\"#FF0000\",\"#00FF00\",\"#0000FF\"] for RGB. Leave empty for rainbow!")),
+		mcp.WithNumber("transition_time_ms", mcp.Description("Smooth transition time between colors in milliseconds (default: 1000)")),
+	)
+	srv.AddTool(colorLoopTool, mcpserver.HandleColorLoopEffect(client))
+
+	// Strobe effect
+	strobeTool := mcp.NewTool("strobe_effect",
+		mcp.WithDescription("Create a rapid strobe/disco effect. ⚠️ Warning: Very fast flashing - not suitable for those sensitive to strobing lights. Great for parties or dramatic effects!"),
+		mcp.WithString("target_id", mcp.Required(), mcp.Description("Light or group ID to strobe")),
+		mcp.WithString("color", mcp.Description("Strobe color in hex format (default: #FFFFFF white)")),
+		mcp.WithNumber("strobe_rate_ms", mcp.Description("Time between flashes in milliseconds - lower = faster strobe (default: 100, minimum safe: 50)")),
+		mcp.WithNumber("duration_ms", mcp.Description("How long to run the strobe effect in milliseconds (default: 5000 = 5 seconds)")),
+	)
+	srv.AddTool(strobeTool, mcpserver.HandleStrobeEffect(client))
+
+	// Alert effect
+	alertTool := mcp.NewTool("alert_effect",
+		mcp.WithDescription("Get immediate attention with a pre-programmed alert pattern - rapid flashes followed by return to normal. Perfect for notifications, alarms, or signaling."),
+		mcp.WithString("target_id", mcp.Required(), mcp.Description("Light or group ID to alert with")),
+		mcp.WithString("alert_color", mcp.Description("Alert flash color in hex format (default: #FF0000 red for urgency)")),
+		mcp.WithString("normal_color", mcp.Description("Color to return to after alert (default: #FFFFFF white)")),
+	)
+	srv.AddTool(alertTool, mcpserver.HandleAlertEffect(client))
+
+	// Stop sequence
+	stopSequenceTool := mcp.NewTool("stop_sequence",
+		mcp.WithDescription("Stop any running light sequence or effect. Use list_sequences first to see active sequence IDs."),
+		mcp.WithString("sequence_id", mcp.Required(), mcp.Description("ID of the sequence to stop (get from list_sequences)")),
+	)
+	srv.AddTool(stopSequenceTool, mcpserver.HandleStopSequence(client))
+
+	// List sequences
+	listSequencesTool := mcp.NewTool("list_sequences",
+		mcp.WithDescription("Show all currently running light effects and sequences with their IDs. Useful for managing multiple effects."),
+	)
+	srv.AddTool(listSequencesTool, mcpserver.HandleListSequences(client))
+
+	// Custom sequence
+	customSequenceTool := mcp.NewTool("custom_sequence",
+		mcp.WithDescription("Create complex custom lighting sequences with precise timing. Build sunrise simulations, scene transitions, party modes, or any multi-step lighting choreography. Sequences can include color changes, brightness fades, on/off states, and delays."),
+		mcp.WithString("sequence", mcp.Required(), mcp.Description("JSON sequence definition. Example: {\"name\":\"Sunrise\",\"loop\":false,\"commands\":[{\"type\":\"light\",\"action\":\"color\",\"target\":\"light_id\",\"params\":{\"color\":\"#FF4500\"},\"delay\":1000},{\"type\":\"light\",\"action\":\"brightness\",\"target\":\"light_id\",\"params\":{\"brightness\":100},\"delay\":2000}]}")),
+	)
+	srv.AddTool(customSequenceTool, mcpserver.HandleCustomSequence(client))
 }
 
 // registerEventTools adds event streaming tools

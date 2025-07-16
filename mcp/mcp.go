@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -551,6 +552,24 @@ func HandleBatchCommands(client *hue.Client) server.ToolHandlerFunc {
 			delayMs = int(d)
 		}
 
+		// Get async flag (default true for non-blocking behavior)
+		async := true
+		if a, ok := args["async"].(bool); ok {
+			async = a
+		}
+		
+		// Generate batch ID
+		batchID := fmt.Sprintf("batch_%d", time.Now().UnixNano())
+		
+		if async {
+			// Execute asynchronously - return immediately
+			go executeBatchAsync(ctx, client, commands, delayMs, batchID)
+			
+			return mcp.NewToolResultText(fmt.Sprintf("Batch started asynchronously with ID: %s\nCommands: %d\nDelay between commands: %dms", 
+				batchID, len(commands), delayMs)), nil
+		}
+		
+		// Execute synchronously (original behavior)
 		var results []string
 		var errors []string
 
@@ -732,4 +751,39 @@ func executeBatchCommand(ctx context.Context, client *hue.Client, action, target
 	default:
 		return "", fmt.Errorf("unknown action: %s", action)
 	}
+}
+
+// executeBatchAsync executes batch commands asynchronously
+func executeBatchAsync(ctx context.Context, client *hue.Client, commands []BatchCommand, delayMs int, batchID string) {
+	// Create a new context that won't be cancelled by the parent
+	asyncCtx := context.Background()
+	
+	// Log batch start
+	log.Printf("Starting async batch %s with %d commands", batchID, len(commands))
+	
+	// Process each command
+	for i, cmd := range commands {
+		// Check if context was cancelled
+		select {
+		case <-ctx.Done():
+			log.Printf("Batch %s cancelled at command %d", batchID, i)
+			return
+		default:
+		}
+		
+		// Execute the command
+		result, err := executeBatchCommand(asyncCtx, client, cmd.Action, cmd.TargetID, cmd.Value, int(cmd.Duration))
+		if err != nil {
+			log.Printf("Batch %s - Command %d (%s) failed: %v", batchID, i, cmd.Action, err)
+		} else {
+			log.Printf("Batch %s - Command %d: %s", batchID, i, result)
+		}
+		
+		// Add delay between commands (except for the last one)
+		if i < len(commands)-1 && delayMs > 0 {
+			time.Sleep(time.Duration(delayMs) * time.Millisecond)
+		}
+	}
+	
+	log.Printf("Batch %s completed", batchID)
 }
