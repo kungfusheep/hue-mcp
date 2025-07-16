@@ -392,7 +392,7 @@ func (c *Client) SetGroupEffect(ctx context.Context, id string, effect string, d
 // IdentifyLight makes a light blink for identification
 func (c *Client) IdentifyLight(ctx context.Context, id string) error {
 	return c.UpdateLight(ctx, id, LightUpdate{
-		Alert: &Alert{Action: "select"},
+		Alert: &Alert{Action: "breathe"},
 	})
 }
 
