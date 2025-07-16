@@ -21,6 +21,9 @@ go.work
 .env
 *.env
 
+# Configuration files with sensitive data
+claude_desktop_config.json
+
 # macOS
 .DS_Store
 
