@@ -529,7 +529,7 @@ type BatchCommand struct {
 	Duration float64 `json:"duration,omitempty"`
 }
 
-// HandleBatchCommands returns a handler for executing multiple commands in batch
+// HandleBatchCommands executes multiple commands in sequence
 func HandleBatchCommands(client *hue.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		args := request.GetArguments()
@@ -537,77 +537,81 @@ func HandleBatchCommands(client *hue.Client) server.ToolHandlerFunc {
 		// Get commands JSON string
 		commandsJSON, ok := args["commands"].(string)
 		if !ok {
-			return mcp.NewToolResultError("commands JSON string is required"), nil
+			return mcp.NewToolResultError("commands JSON array is required"), nil
 		}
-
-		// Parse commands JSON
-		var commands []BatchCommand
+		
+		// Parse commands
+		var commands []map[string]interface{}
 		if err := json.Unmarshal([]byte(commandsJSON), &commands); err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to parse commands JSON: %v", err)), nil
 		}
-
+		
 		// Get delay between commands (default 100ms)
 		delayMs := 100
 		if d, ok := args["delay_ms"].(float64); ok {
 			delayMs = int(d)
 		}
-
-		// Get async flag (default true for non-blocking behavior)
+		
+		// Get async flag (default true for non-blocking)
 		async := true
 		if a, ok := args["async"].(bool); ok {
 			async = a
 		}
 		
-		// Generate batch ID
-		batchID := fmt.Sprintf("batch_%d", time.Now().UnixNano())
+		// Check for cache_name to save this scene
+		cacheName, _ := args["cache_name"].(string)
+		cacheDescription, _ := args["cache_description"].(string)
+		
+		// If cache_name provided, save the scene
+		if cacheName != "" {
+			err := globalSceneCache.SaveScene(cacheName, commands, delayMs, cacheDescription)
+			if err != nil {
+				return mcp.NewToolResultError(fmt.Sprintf("Failed to cache scene: %v", err)), nil
+			}
+			log.Printf("Cached scene '%s' with %d commands", cacheName, len(commands))
+		}
+		
+		// Generate batch ID for tracking
+		batchID := fmt.Sprintf("batch_%d_%d", time.Now().Unix(), len(commands))
 		
 		if async {
 			// Execute asynchronously - return immediately
-			go executeBatchAsync(ctx, client, commands, delayMs, batchID)
+			go ExecuteBatchAsync(ctx, client, commands, delayMs, batchID)
 			
-			return mcp.NewToolResultText(fmt.Sprintf("Batch started asynchronously with ID: %s\nCommands: %d\nDelay between commands: %dms", 
-				batchID, len(commands), delayMs)), nil
-		}
-		
-		// Execute synchronously (original behavior)
-		var results []string
-		var errors []string
-
-		// Process each command
-		for i, cmd := range commands {
-			// Execute the command
-			result, err := executeBatchCommand(ctx, client, cmd.Action, cmd.TargetID, cmd.Value, int(cmd.Duration))
-			if err != nil {
-				errors = append(errors, fmt.Sprintf("Command %d (%s): %v", i, cmd.Action, err))
-			} else {
-				results = append(results, fmt.Sprintf("Command %d: %s", i, result))
+			responseMsg := fmt.Sprintf("Batch started asynchronously with ID: %s\nCommands: %d\nDelay between commands: %dms", 
+				batchID, len(commands), delayMs)
+			
+			if cacheName != "" {
+				responseMsg = fmt.Sprintf("Creating and caching atmosphere: %s...\n%s", cacheName, responseMsg)
 			}
-
-			// Add delay between commands (except for the last one)
-			if i < len(commands)-1 && delayMs > 0 {
-				time.Sleep(time.Duration(delayMs) * time.Millisecond)
-			}
-		}
-
-		// Build response
-		var response strings.Builder
-		response.WriteString(fmt.Sprintf("Batch execution completed: %d commands processed\n", len(commands)))
-		
-		if len(results) > 0 {
-			response.WriteString("\nSuccessful commands:\n")
+			
+			return mcp.NewToolResultText(responseMsg), nil
+		} else {
+			// Execute synchronously
+			log.Printf("Starting synchronous batch %s with %d commands", batchID, len(commands))
+			
+			results := executeBatch(ctx, client, commands, delayMs)
+			
+			// Summarize results
+			successful := 0
+			failed := 0
 			for _, result := range results {
-				response.WriteString(fmt.Sprintf("✅ %s\n", result))
+				if result.Success {
+					successful++
+				} else {
+					failed++
+				}
 			}
-		}
-
-		if len(errors) > 0 {
-			response.WriteString("\nFailed commands:\n")
-			for _, error := range errors {
-				response.WriteString(fmt.Sprintf("❌ %s\n", error))
+			
+			responseMsg := fmt.Sprintf("Batch completed: %d successful, %d failed\nBatch ID: %s", 
+				successful, failed, batchID)
+			
+			if cacheName != "" {
+				responseMsg = fmt.Sprintf("Created and cached atmosphere: %s\n%s", cacheName, responseMsg)
 			}
+			
+			return mcp.NewToolResultText(responseMsg), nil
 		}
-
-		return mcp.NewToolResultText(response.String()), nil
 	}
 }
 
@@ -753,8 +757,54 @@ func executeBatchCommand(ctx context.Context, client *hue.Client, action, target
 	}
 }
 
-// executeBatchAsync executes batch commands asynchronously
-func executeBatchAsync(ctx context.Context, client *hue.Client, commands []BatchCommand, delayMs int, batchID string) {
+// BatchResult represents the result of a batch command
+type BatchResult struct {
+	Success bool
+	Message string
+	Error   error
+}
+
+// executeBatch executes batch commands synchronously and returns results
+func executeBatch(ctx context.Context, client *hue.Client, commands []map[string]interface{}, delayMs int) []BatchResult {
+	results := make([]BatchResult, 0, len(commands))
+	
+	for i, cmd := range commands {
+		// Extract command parameters
+		action, _ := cmd["action"].(string)
+		targetID, _ := cmd["target_id"].(string)
+		value, _ := cmd["value"].(string)
+		duration := 0
+		if d, ok := cmd["duration"].(float64); ok {
+			duration = int(d)
+		}
+		
+		// Execute the command
+		result, err := executeBatchCommand(ctx, client, action, targetID, value, duration)
+		if err != nil {
+			results = append(results, BatchResult{
+				Success: false,
+				Message: fmt.Sprintf("Command %d (%s): %v", i, action, err),
+				Error:   err,
+			})
+		} else {
+			results = append(results, BatchResult{
+				Success: true,
+				Message: result,
+				Error:   nil,
+			})
+		}
+		
+		// Add delay between commands (except for the last one)
+		if i < len(commands)-1 && delayMs > 0 {
+			time.Sleep(time.Duration(delayMs) * time.Millisecond)
+		}
+	}
+	
+	return results
+}
+
+// ExecuteBatchAsync executes batch commands asynchronously (exported for testing)
+func ExecuteBatchAsync(ctx context.Context, client *hue.Client, commands []map[string]interface{}, delayMs int, batchID string) {
 	// Create a new context that won't be cancelled by the parent
 	asyncCtx := context.Background()
 	
@@ -771,10 +821,19 @@ func executeBatchAsync(ctx context.Context, client *hue.Client, commands []Batch
 		default:
 		}
 		
+		// Extract command parameters
+		action, _ := cmd["action"].(string)
+		targetID, _ := cmd["target_id"].(string)
+		value, _ := cmd["value"].(string)
+		duration := 0
+		if d, ok := cmd["duration"].(float64); ok {
+			duration = int(d)
+		}
+		
 		// Execute the command
-		result, err := executeBatchCommand(asyncCtx, client, cmd.Action, cmd.TargetID, cmd.Value, int(cmd.Duration))
+		result, err := executeBatchCommand(asyncCtx, client, action, targetID, value, duration)
 		if err != nil {
-			log.Printf("Batch %s - Command %d (%s) failed: %v", batchID, i, cmd.Action, err)
+			log.Printf("Batch %s - Command %d (%s) failed: %v", batchID, i, action, err)
 		} else {
 			log.Printf("Batch %s - Command %d: %s", batchID, i, result)
 		}

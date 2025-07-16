@@ -352,10 +352,12 @@ func registerEntertainmentTools(srv *server.MCPServer, client *hue.Client) {
 func registerBatchTools(srv *server.MCPServer, client *hue.Client) {
 	// Batch commands
 	batchTool := mcp.NewTool("batch_commands",
-		mcp.WithDescription("Execute multiple lighting commands in sequence with timing control. By default runs asynchronously (returns immediately) so you can continue working while lights change. Perfect for creating simple animations or coordinated lighting changes across multiple lights."),
+		mcp.WithDescription("Execute multiple lighting commands in sequence with timing control. By default runs asynchronously (returns immediately) so you can continue working while lights change. Perfect for creating simple animations or coordinated lighting changes across multiple lights. Can optionally cache complex scenes for instant recall later!"),
 		mcp.WithString("commands", mcp.Required(), mcp.Description("JSON array of commands. Example: [{\"action\":\"light_on\",\"target_id\":\"abc123\"}, {\"action\":\"light_color\",\"target_id\":\"abc123\",\"value\":\"#FF0000\"}, {\"action\":\"light_brightness\",\"target_id\":\"abc123\",\"value\":\"75\"}]")),
 		mcp.WithNumber("delay_ms", mcp.Description("Milliseconds to wait between each command - use for timing effects (default: 100)")),
 		mcp.WithBoolean("async", mcp.Description("Run in background (true) or wait for completion (false). Default true = non-blocking")),
+		mcp.WithString("cache_name", mcp.Description("Optional: Save this sequence as a named scene for instant recall later (e.g., 'alien_artifact_discovery')")),
+		mcp.WithString("cache_description", mcp.Description("Optional: Description of the cached scene to help remember its purpose")),
 	)
 	srv.AddTool(batchTool, mcpserver.HandleBatchCommands(client))
 }
@@ -431,6 +433,30 @@ func registerSchedulerTools(srv *server.MCPServer, client *hue.Client) {
 		mcp.WithString("sequence", mcp.Required(), mcp.Description("JSON sequence definition. Example: {\"name\":\"Sunrise\",\"loop\":false,\"commands\":[{\"type\":\"light\",\"action\":\"color\",\"target\":\"light_id\",\"params\":{\"color\":\"#FF4500\"},\"delay\":1000},{\"type\":\"light\",\"action\":\"brightness\",\"target\":\"light_id\",\"params\":{\"brightness\":100},\"delay\":2000}]}")),
 	)
 	srv.AddTool(customSequenceTool, mcpserver.HandleCustomSequence(client))
+	
+	// Scene cache tools
+	recallSceneTool := mcp.NewTool("recall_scene",
+		mcp.WithDescription("Instantly recall a previously cached lighting scene. Perfect for quickly setting up complex atmospheres in RPGs or recreating favorite lighting moods."),
+		mcp.WithString("scene_name", mcp.Required(), mcp.Description("Name of the cached scene to recall (e.g., 'alien_artifact_discovery')")),
+	)
+	srv.AddTool(recallSceneTool, mcpserver.HandleRecallScene(client))
+	
+	listCachedScenesTool := mcp.NewTool("list_cached_scenes",
+		mcp.WithDescription("List all available cached lighting scenes with their descriptions and usage statistics. Helps you remember what atmospheres you've created."),
+	)
+	srv.AddTool(listCachedScenesTool, mcpserver.HandleListCachedScenes(client))
+	
+	clearCachedSceneTool := mcp.NewTool("clear_cached_scene",
+		mcp.WithDescription("Remove a cached scene from memory. Use this to clean up scenes you no longer need."),
+		mcp.WithString("scene_name", mcp.Required(), mcp.Description("Name of the cached scene to remove")),
+	)
+	srv.AddTool(clearCachedSceneTool, mcpserver.HandleClearCachedScene(client))
+	
+	exportSceneTool := mcp.NewTool("export_scene",
+		mcp.WithDescription("Export a cached scene as JSON for sharing or backup. Great for saving your favorite atmospheric setups."),
+		mcp.WithString("scene_name", mcp.Required(), mcp.Description("Name of the cached scene to export")),
+	)
+	srv.AddTool(exportSceneTool, mcpserver.HandleExportScene(client))
 }
 
 // registerEventTools adds event streaming tools

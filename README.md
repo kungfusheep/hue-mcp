@@ -15,6 +15,7 @@ A Model Context Protocol (MCP) server for Philips Hue v2 API, enabling native li
 - 🚀 **Non-blocking Operations**: All commands execute asynchronously by default
 - 🎭 **Pre-built Effects**: Flash, pulse, color loop, strobe, and alert patterns
 - 🎨 **Custom Sequences**: Build complex lighting choreography with precise timing
+- 💾 **Scene Caching**: Save complex lighting setups for instant recall - perfect for RPGs!
 - 🔄 **Real-time Event Streaming**: Subscribe to motion, button, and light state changes
 - 📦 **Batch Commands**: Execute multiple commands with timing control
 - 🎮 **Entertainment Areas**: Support for gaming and media sync (DTLS foundation ready)
@@ -133,7 +134,7 @@ Once configured, you can ask Claude to:
 ### Scenes & Automation
 - `list_scenes` - List available scenes
 - `activate_scene` - Activate a scene
-- `batch_commands` - Execute multiple commands with timing (async by default!)
+- `batch_commands` - Execute multiple commands with timing (async by default! + scene caching!)
 
 ### Pre-built Effects 🎭
 - `flash_effect` - Attention-getting flashes (notifications, alerts)
@@ -146,6 +147,12 @@ Once configured, you can ask Claude to:
 - `custom_sequence` - Build complex multi-step lighting choreography
 - `list_sequences` - View all running effects
 - `stop_sequence` - Stop one or more running effects (supports batch stopping)
+
+### Scene Caching 💾
+- `recall_scene` - Instantly recall a cached lighting atmosphere
+- `list_cached_scenes` - View all saved scenes with usage stats
+- `clear_cached_scene` - Remove a cached scene
+- `export_scene` - Export scene as JSON for sharing/backup
 
 ### Sensors & Events
 - `list_motion_sensors` - Get motion sensor states
@@ -175,6 +182,29 @@ The MCP includes a powerful effects engine:
 - **Parallel execution** - run multiple effects simultaneously
 - **Loop support** - effects can repeat indefinitely
 - See [EFFECTS_GUIDE.md](EFFECTS_GUIDE.md) for detailed examples
+
+### 💾 Scene Caching for RPGs
+Perfect for game masters who need instant atmosphere changes:
+
+**First time - Create and cache:**
+```
+"Set up mysterious alien artifact discovery lighting"
+→ Claude creates complex 15-command sequence with purple/blue colors, pulsing, flickering
+→ Automatically caches as "alien_artifact_discovery"
+```
+
+**Later in the game - Instant recall:**
+```
+"Recall the alien artifact scene"
+→ Instantly recreates the exact same atmosphere
+```
+
+Features:
+- Cache complex multi-command scenes with `cache_name` in batch_commands
+- Instant recall with `recall_scene`
+- Track usage with `list_cached_scenes`
+- Export scenes for sharing with other GMs
+- Scenes persist throughout your Claude session
 
 ### 🔄 Real-time Events
 Subscribe to live updates from your Hue system:
