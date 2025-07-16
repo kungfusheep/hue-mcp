@@ -431,10 +431,10 @@ func hexToXY(hex string) (float64, float64) {
 		bf = bf / 12.92
 	}
 	
-	// Convert to XYZ
-	X := rf*0.649926 + gf*0.103455 + bf*0.197109
-	Y := rf*0.234327 + gf*0.743075 + bf*0.022598
-	Z := rf*0.000000 + gf*0.053077 + bf*1.035763
+	// Convert to XYZ using sRGB color space matrix
+	X := rf*0.4124564 + gf*0.3575761 + bf*0.1804375
+	Y := rf*0.2126729 + gf*0.7151522 + bf*0.0721750
+	Z := rf*0.0193339 + gf*0.1191920 + bf*0.9503041
 	
 	// Convert to xy
 	sum := X + Y + Z
