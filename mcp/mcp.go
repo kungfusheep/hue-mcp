@@ -289,7 +289,7 @@ func HandleGroupEffect(client *hue.Client) server.ToolHandlerFunc {
 // Scene handlers
 
 // HandleListScenes returns a handler for listing scenes
-func HandleListScenes(client *hue.Client) mcp.HandlerFunc {
+func HandleListScenes(client *hue.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		scenes, err := client.GetScenes(ctx)
 		if err != nil {
@@ -307,7 +307,7 @@ func HandleListScenes(client *hue.Client) mcp.HandlerFunc {
 }
 
 // HandleActivateScene returns a handler for activating a scene
-func HandleActivateScene(client *hue.Client) mcp.HandlerFunc {
+func HandleActivateScene(client *hue.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		args := request.GetArguments()
 		sceneID, ok := args["scene_id"].(string)
@@ -325,7 +325,7 @@ func HandleActivateScene(client *hue.Client) mcp.HandlerFunc {
 }
 
 // HandleCreateScene returns a handler for creating a scene
-func HandleCreateScene(client *hue.Client) mcp.HandlerFunc {
+func HandleCreateScene(client *hue.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		args := request.GetArguments()
 		name, ok := args["name"].(string)
@@ -336,12 +336,6 @@ func HandleCreateScene(client *hue.Client) mcp.HandlerFunc {
 		groupID, ok := args["group_id"].(string)
 		if !ok {
 			return mcp.NewToolResultError("group_id is required"), nil
-		}
-
-		// Get current light states in the group
-		group, err := client.GetGroup(ctx, groupID)
-		if err != nil {
-			return mcp.NewToolResultError(fmt.Sprintf("Failed to get group: %v", err)), nil
 		}
 
 		// Create scene
@@ -369,7 +363,7 @@ func HandleCreateScene(client *hue.Client) mcp.HandlerFunc {
 // System handlers
 
 // HandleListLights returns a handler for listing lights
-func HandleListLights(client *hue.Client) mcp.HandlerFunc {
+func HandleListLights(client *hue.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		lights, err := client.GetLights(ctx)
 		if err != nil {
@@ -392,7 +386,7 @@ func HandleListLights(client *hue.Client) mcp.HandlerFunc {
 }
 
 // HandleListGroups returns a handler for listing groups
-func HandleListGroups(client *hue.Client) mcp.HandlerFunc {
+func HandleListGroups(client *hue.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		groups, err := client.GetGroups(ctx)
 		if err != nil {
@@ -415,7 +409,7 @@ func HandleListGroups(client *hue.Client) mcp.HandlerFunc {
 }
 
 // HandleGetLightState returns a handler for getting light state
-func HandleGetLightState(client *hue.Client) mcp.HandlerFunc {
+func HandleGetLightState(client *hue.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		args := request.GetArguments()
 		lightID, ok := args["light_id"].(string)
@@ -451,7 +445,7 @@ func HandleGetLightState(client *hue.Client) mcp.HandlerFunc {
 }
 
 // HandleBridgeInfo returns a handler for getting bridge info
-func HandleBridgeInfo(client *hue.Client) mcp.HandlerFunc {
+func HandleBridgeInfo(client *hue.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		bridge, err := client.GetBridge(ctx)
 		if err != nil {
@@ -470,7 +464,7 @@ func HandleBridgeInfo(client *hue.Client) mcp.HandlerFunc {
 }
 
 // HandleIdentifyLight returns a handler for identifying a light
-func HandleIdentifyLight(client *hue.Client) mcp.HandlerFunc {
+func HandleIdentifyLight(client *hue.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		args := request.GetArguments()
 		lightID, ok := args["light_id"].(string)

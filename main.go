@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"crypto/tls"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -50,7 +49,7 @@ func main() {
 		"Philips Hue v2 MCP Server",
 		"1.0.0",
 		server.WithToolCapabilities(true),
-		server.WithResourceCapabilities(true),
+		server.WithResourceCapabilities(true, false),
 	)
 
 	// Register tools
