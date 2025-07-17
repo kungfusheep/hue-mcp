@@ -17,15 +17,22 @@ import (
 )
 
 func main() {
-	// Check if running in CLI mode
-	if len(os.Args) > 1 && os.Args[1] == "cli" {
-		// Remove "cli" from args and run CLI
-		os.Args = append([]string{os.Args[0]}, os.Args[2:]...)
-		runCLI()
+	// If no args or first arg is not a known command, run MCP server
+	if len(os.Args) == 1 {
+		runMCPServer()
 		return
 	}
 
-	// Otherwise run MCP server
+	// Check if it's a CLI command
+	cliCommands := []string{"lights", "groups", "effects", "scenes", "hue-scenes", "sensors", "batch", "help"}
+	for _, cmd := range cliCommands {
+		if os.Args[1] == cmd {
+			runCLI()
+			return
+		}
+	}
+
+	// Otherwise run MCP server (for unknown commands)
 	runMCPServer()
 }
 
