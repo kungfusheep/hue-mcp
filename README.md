@@ -87,29 +87,42 @@ Quit and restart Claude Desktop to load the new configuration.
 
 ## CLI Usage
 
-The `hue` binary also functions as a standalone CLI tool:
+The `hue` binary functions as both an MCP server and a standalone CLI tool:
 
 ```bash
-# Run in CLI mode
-./hue cli <command>
+# Run as MCP server (for Claude Desktop)
+./hue
+
+# Run CLI commands directly
+./hue <command>
 
 # Examples:
-./hue cli lights list
-./hue cli lights on "Office Lamp"
-./hue cli lights color "Office Lamp" blue
-./hue cli lights brightness "Office Lamp" 50
+./hue lights list
+./hue lights on "Office Lamp"
+./hue lights color "Office Lamp" blue
+./hue lights brightness "Office Lamp" 50
 
 # Group control
-./hue cli groups on "Living Room"
-./hue cli groups color "Kitchen" warm
+./hue groups list
+./hue groups on "Living Room"
+./hue groups color "Kitchen" warm
+./hue groups rooms  # List all rooms
 
 # Effects
-./hue cli effects flash "Office Lamp" --color red --count 3
-./hue cli effects pulse "Bedroom Light" --min 10 --max 90
+./hue effects flash "Office Lamp" --color red --count 3
+./hue effects pulse "Bedroom Light" --min 10 --max 90
+./hue effects stop <sequence-id>
 
 # Native Hue scenes
-./hue cli hue-scenes list
-./hue cli hue-scenes activate "Relax"
+./hue hue-scenes list
+./hue hue-scenes activate "Relax"
+
+# Cached scenes (from MCP)
+./hue scenes list
+./hue scenes recall "alien_artifact_discovery"
+
+# Batch commands
+./hue batch -f commands.json
 ```
 
 The CLI supports friendly names for all lights and rooms - no need to use UUIDs!
