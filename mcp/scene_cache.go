@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/kungfusheep/hue-mcp/hue"
+	"github.com/kungfusheep/hue/client"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 )
@@ -111,7 +111,7 @@ func (sc *SceneCache) DeleteScene(name string) error {
 }
 
 // HandleRecallScene executes a cached scene
-func HandleRecallScene(client *hue.Client) server.ToolHandlerFunc {
+func HandleRecallScene(client *client.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		args := request.GetArguments()
 
@@ -144,7 +144,7 @@ func HandleRecallScene(client *hue.Client) server.ToolHandlerFunc {
 }
 
 // HandleListCachedScenes lists all cached scenes
-func HandleListCachedScenes(client *hue.Client) server.ToolHandlerFunc {
+func HandleListCachedScenes(client *client.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		scenes := globalSceneCache.ListScenes()
 
@@ -180,7 +180,7 @@ func HandleListCachedScenes(client *hue.Client) server.ToolHandlerFunc {
 }
 
 // HandleClearCachedScene removes a cached scene
-func HandleClearCachedScene(client *hue.Client) server.ToolHandlerFunc {
+func HandleClearCachedScene(client *client.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		args := request.GetArguments()
 
@@ -199,7 +199,7 @@ func HandleClearCachedScene(client *hue.Client) server.ToolHandlerFunc {
 }
 
 // HandleExportScene exports a cached scene as JSON
-func HandleExportScene(client *hue.Client) server.ToolHandlerFunc {
+func HandleExportScene(client *client.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		args := request.GetArguments()
 

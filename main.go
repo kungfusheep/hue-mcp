@@ -10,12 +10,39 @@ import (
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
-	"github.com/kungfusheep/hue-mcp/effects"
-	"github.com/kungfusheep/hue-mcp/hue"
-	mcpserver "github.com/kungfusheep/hue-mcp/mcp"
+	"github.com/kungfusheep/hue/cmd"
+	"github.com/kungfusheep/hue/effects"
+	"github.com/kungfusheep/hue/client"
+	mcpserver "github.com/kungfusheep/hue/mcp"
 )
 
 func main() {
+	// Check if running in CLI mode
+	if len(os.Args) > 1 && os.Args[1] == "cli" {
+		// Remove "cli" from args and run CLI
+		os.Args = append([]string{os.Args[0]}, os.Args[2:]...)
+		runCLI()
+		return
+	}
+
+	// Otherwise run MCP server
+	runMCPServer()
+}
+
+// runCLI initializes and runs the CLI interface
+func runCLI() {
+	// Initialize Hue client
+	hueClient := initHueClient()
+	
+	// Initialize scheduler
+	mcpserver.InitScheduler(hueClient)
+	
+	// Run CLI with the initialized client
+	cmd.Execute(hueClient)
+}
+
+// initHueClient creates and initializes a Hue client (shared by MCP and CLI)
+func initHueClient() *client.Client {
 	// Get configuration from environment
 	bridgeIP := os.Getenv("HUE_BRIDGE_IP")
 	if bridgeIP == "" {
@@ -36,13 +63,21 @@ func main() {
 	}
 
 	// Initialize Hue client
-	hueClient := hue.NewClient(bridgeIP, username, httpClient)
+	hueClient := client.NewClient(bridgeIP, username, httpClient)
 
 	// Test connection
 	ctx := context.Background()
 	if err := hueClient.TestConnection(ctx); err != nil {
 		log.Fatalf("Failed to connect to Hue bridge: %v", err)
 	}
+
+	return hueClient
+}
+
+// runMCPServer runs the MCP server (original main function)
+func runMCPServer() {
+	// Initialize Hue client using shared function
+	hueClient := initHueClient()
 
 	// Initialize scheduler
 	mcpserver.InitScheduler(hueClient)
@@ -77,7 +112,7 @@ func main() {
 }
 
 // registerLightTools adds individual light control tools
-func registerLightTools(srv *server.MCPServer, client *hue.Client) {
+func registerLightTools(srv *server.MCPServer, client *client.Client) {
 	// Light on/off
 	lightOnTool := mcp.NewTool("light_on",
 		mcp.WithDescription("Turn a light on"),
@@ -109,7 +144,7 @@ func registerLightTools(srv *server.MCPServer, client *hue.Client) {
 }
 
 // registerGroupTools adds group control tools
-func registerGroupTools(srv *server.MCPServer, client *hue.Client) {
+func registerGroupTools(srv *server.MCPServer, client *client.Client) {
 	// Group on/off
 	groupOnTool := mcp.NewTool("group_on",
 		mcp.WithDescription("Turn a group of lights on"),
@@ -140,7 +175,7 @@ func registerGroupTools(srv *server.MCPServer, client *hue.Client) {
 }
 
 // registerSceneTools adds scene management tools
-func registerSceneTools(srv *server.MCPServer, client *hue.Client) {
+func registerSceneTools(srv *server.MCPServer, client *client.Client) {
 	// List scenes
 	listScenesTool := mcp.NewTool("list_scenes",
 		mcp.WithDescription("List all available scenes"),
@@ -164,7 +199,7 @@ func registerSceneTools(srv *server.MCPServer, client *hue.Client) {
 }
 
 // registerEffectTools adds native effect tools
-func registerEffectTools(srv *server.MCPServer, client *hue.Client) {
+func registerEffectTools(srv *server.MCPServer, client *client.Client) {
 	// Get supported effects dynamically
 	ctx := context.Background()
 	supportedEffects, err := client.GetAllSupportedEffects(ctx)
@@ -199,7 +234,7 @@ func registerEffectTools(srv *server.MCPServer, client *hue.Client) {
 }
 
 // registerSystemTools adds system and discovery tools
-func registerSystemTools(srv *server.MCPServer, client *hue.Client) {
+func registerSystemTools(srv *server.MCPServer, client *client.Client) {
 	// List lights
 	listLightsTool := mcp.NewTool("list_lights",
 		mcp.WithDescription("List all available lights"),
@@ -234,7 +269,7 @@ func registerSystemTools(srv *server.MCPServer, client *hue.Client) {
 }
 
 // registerRoomTools adds room and zone control tools
-func registerRoomTools(srv *server.MCPServer, client *hue.Client) {
+func registerRoomTools(srv *server.MCPServer, client *client.Client) {
 	// List rooms
 	listRoomsTool := mcp.NewTool("list_rooms",
 		mcp.WithDescription("List all rooms with their lights"),
@@ -262,7 +297,7 @@ func registerRoomTools(srv *server.MCPServer, client *hue.Client) {
 }
 
 // registerSensorTools adds sensor reading tools
-func registerSensorTools(srv *server.MCPServer, client *hue.Client) {
+func registerSensorTools(srv *server.MCPServer, client *client.Client) {
 	// Motion sensors
 	listMotionTool := mcp.NewTool("list_motion_sensors",
 		mcp.WithDescription("List all motion sensors and their states"),
@@ -289,7 +324,7 @@ func registerSensorTools(srv *server.MCPServer, client *hue.Client) {
 }
 
 // registerEntertainmentTools adds entertainment configuration tools
-func registerEntertainmentTools(srv *server.MCPServer, client *hue.Client) {
+func registerEntertainmentTools(srv *server.MCPServer, client *client.Client) {
 	// List entertainment configurations
 	listEntTool := mcp.NewTool("list_entertainment",
 		mcp.WithDescription("List all entertainment configurations"),
@@ -349,7 +384,7 @@ func registerEntertainmentTools(srv *server.MCPServer, client *hue.Client) {
 }
 
 // registerBatchTools adds batch request capability for efficiency
-func registerBatchTools(srv *server.MCPServer, client *hue.Client) {
+func registerBatchTools(srv *server.MCPServer, client *client.Client) {
 	// Batch commands
 	batchTool := mcp.NewTool("batch_commands",
 		mcp.WithDescription("Execute multiple lighting commands in sequence with timing control. By default runs asynchronously (returns immediately) so you can continue working while lights change. Perfect for creating simple animations or coordinated lighting changes across multiple lights. Can optionally cache complex scenes for instant recall later!"),
@@ -363,7 +398,7 @@ func registerBatchTools(srv *server.MCPServer, client *hue.Client) {
 }
 
 // registerSchedulerTools adds scheduler and sequence tools
-func registerSchedulerTools(srv *server.MCPServer, client *hue.Client) {
+func registerSchedulerTools(srv *server.MCPServer, client *client.Client) {
 	// Flash effect
 	flashTool := mcp.NewTool("flash_effect",
 		mcp.WithDescription("Create a flashing/blinking effect on lights - great for alerts, notifications, or party effects. The light will flash on and off with your chosen color."),
@@ -460,7 +495,7 @@ func registerSchedulerTools(srv *server.MCPServer, client *hue.Client) {
 }
 
 // registerEventTools adds event streaming tools
-func registerEventTools(srv *server.MCPServer, client *hue.Client) {
+func registerEventTools(srv *server.MCPServer, client *client.Client) {
 	// Initialize event manager
 	mcpserver.InitEventManager(client)
 	
@@ -493,7 +528,7 @@ func registerEventTools(srv *server.MCPServer, client *hue.Client) {
 }
 
 // registerCRUDTools adds create, update, delete tools
-func registerCRUDTools(srv *server.MCPServer, client *hue.Client) {
+func registerCRUDTools(srv *server.MCPServer, client *client.Client) {
 	// Scene CRUD
 	createSceneFromStateTool := mcp.NewTool("create_scene_from_state",
 		mcp.WithDescription("Create a new scene capturing current light states"),

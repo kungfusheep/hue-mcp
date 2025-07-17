@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kungfusheep/hue-mcp/effects"
-	"github.com/kungfusheep/hue-mcp/hue"
+	"github.com/kungfusheep/hue/effects"
+	"github.com/kungfusheep/hue/client"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 )
@@ -18,7 +18,7 @@ import (
 // Light control handlers
 
 // HandleLightOn returns a handler for turning a light on
-func HandleLightOn(client *hue.Client) server.ToolHandlerFunc {
+func HandleLightOn(hueClient *client.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		args := request.GetArguments()
 		lightID, ok := args["light_id"].(string)
@@ -26,7 +26,7 @@ func HandleLightOn(client *hue.Client) server.ToolHandlerFunc {
 			return mcp.NewToolResultError("light_id is required"), nil
 		}
 
-		err := client.TurnOnLight(ctx, lightID)
+		err := hueClient.TurnOnLight(ctx, lightID)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to turn on light: %v", err)), nil
 		}
@@ -36,7 +36,7 @@ func HandleLightOn(client *hue.Client) server.ToolHandlerFunc {
 }
 
 // HandleLightOff returns a handler for turning a light off
-func HandleLightOff(client *hue.Client) server.ToolHandlerFunc {
+func HandleLightOff(hueClient *client.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		args := request.GetArguments()
 		lightID, ok := args["light_id"].(string)
@@ -44,7 +44,7 @@ func HandleLightOff(client *hue.Client) server.ToolHandlerFunc {
 			return mcp.NewToolResultError("light_id is required"), nil
 		}
 
-		err := client.TurnOffLight(ctx, lightID)
+		err := hueClient.TurnOffLight(ctx, lightID)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to turn off light: %v", err)), nil
 		}
@@ -54,7 +54,7 @@ func HandleLightOff(client *hue.Client) server.ToolHandlerFunc {
 }
 
 // HandleLightBrightness returns a handler for setting light brightness
-func HandleLightBrightness(client *hue.Client) server.ToolHandlerFunc {
+func HandleLightBrightness(hueClient *client.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		args := request.GetArguments()
 		lightID, ok := args["light_id"].(string)
@@ -71,7 +71,7 @@ func HandleLightBrightness(client *hue.Client) server.ToolHandlerFunc {
 			return mcp.NewToolResultError("brightness must be between 0 and 100"), nil
 		}
 
-		err := client.SetLightBrightness(ctx, lightID, brightness)
+		err := hueClient.SetLightBrightness(ctx, lightID, brightness)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to set brightness: %v", err)), nil
 		}
@@ -81,7 +81,7 @@ func HandleLightBrightness(client *hue.Client) server.ToolHandlerFunc {
 }
 
 // HandleLightColor returns a handler for setting light color
-func HandleLightColor(client *hue.Client) server.ToolHandlerFunc {
+func HandleLightColor(hueClient *client.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		args := request.GetArguments()
 		lightID, ok := args["light_id"].(string)
@@ -105,7 +105,7 @@ func HandleLightColor(client *hue.Client) server.ToolHandlerFunc {
 			return mcp.NewToolResultError("Invalid color format. Use hex code (#RRGGBB) or color name"), nil
 		}
 
-		err := client.SetLightColor(ctx, lightID, hexColor)
+		err := hueClient.SetLightColor(ctx, lightID, hexColor)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to set color: %v", err)), nil
 		}
@@ -115,7 +115,7 @@ func HandleLightColor(client *hue.Client) server.ToolHandlerFunc {
 }
 
 // HandleLightEffect returns a handler for setting light effects
-func HandleLightEffect(client *hue.Client) server.ToolHandlerFunc {
+func HandleLightEffect(hueClient *client.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		args := request.GetArguments()
 		lightID, ok := args["light_id"].(string)
@@ -136,7 +136,7 @@ func HandleLightEffect(client *hue.Client) server.ToolHandlerFunc {
 			duration = int(d)
 		}
 
-		err := client.SetLightEffect(ctx, lightID, effect, duration)
+		err := hueClient.SetLightEffect(ctx, lightID, effect, duration)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to set effect: %v", err)), nil
 		}
@@ -154,7 +154,7 @@ func HandleLightEffect(client *hue.Client) server.ToolHandlerFunc {
 // Group control handlers
 
 // HandleGroupOn returns a handler for turning a group on
-func HandleGroupOn(client *hue.Client) server.ToolHandlerFunc {
+func HandleGroupOn(hueClient *client.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		args := request.GetArguments()
 		groupID, ok := args["group_id"].(string)
@@ -162,7 +162,7 @@ func HandleGroupOn(client *hue.Client) server.ToolHandlerFunc {
 			return mcp.NewToolResultError("group_id is required"), nil
 		}
 
-		err := client.TurnOnGroup(ctx, groupID)
+		err := hueClient.TurnOnGroup(ctx, groupID)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to turn on group: %v", err)), nil
 		}
@@ -172,7 +172,7 @@ func HandleGroupOn(client *hue.Client) server.ToolHandlerFunc {
 }
 
 // HandleGroupOff returns a handler for turning a group off
-func HandleGroupOff(client *hue.Client) server.ToolHandlerFunc {
+func HandleGroupOff(hueClient *client.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		args := request.GetArguments()
 		groupID, ok := args["group_id"].(string)
@@ -180,7 +180,7 @@ func HandleGroupOff(client *hue.Client) server.ToolHandlerFunc {
 			return mcp.NewToolResultError("group_id is required"), nil
 		}
 
-		err := client.TurnOffGroup(ctx, groupID)
+		err := hueClient.TurnOffGroup(ctx, groupID)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to turn off group: %v", err)), nil
 		}
@@ -190,7 +190,7 @@ func HandleGroupOff(client *hue.Client) server.ToolHandlerFunc {
 }
 
 // HandleGroupBrightness returns a handler for setting group brightness
-func HandleGroupBrightness(client *hue.Client) server.ToolHandlerFunc {
+func HandleGroupBrightness(hueClient *client.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		args := request.GetArguments()
 		groupID, ok := args["group_id"].(string)
@@ -207,7 +207,7 @@ func HandleGroupBrightness(client *hue.Client) server.ToolHandlerFunc {
 			return mcp.NewToolResultError("brightness must be between 0 and 100"), nil
 		}
 
-		err := client.SetGroupBrightness(ctx, groupID, brightness)
+		err := hueClient.SetGroupBrightness(ctx, groupID, brightness)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to set brightness: %v", err)), nil
 		}
@@ -217,7 +217,7 @@ func HandleGroupBrightness(client *hue.Client) server.ToolHandlerFunc {
 }
 
 // HandleGroupColor returns a handler for setting group color
-func HandleGroupColor(client *hue.Client) server.ToolHandlerFunc {
+func HandleGroupColor(hueClient *client.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		args := request.GetArguments()
 		groupID, ok := args["group_id"].(string)
@@ -241,7 +241,7 @@ func HandleGroupColor(client *hue.Client) server.ToolHandlerFunc {
 			return mcp.NewToolResultError("Invalid color format. Use hex code (#RRGGBB) or color name"), nil
 		}
 
-		err := client.SetGroupColor(ctx, groupID, hexColor)
+		err := hueClient.SetGroupColor(ctx, groupID, hexColor)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to set color: %v", err)), nil
 		}
@@ -251,7 +251,7 @@ func HandleGroupColor(client *hue.Client) server.ToolHandlerFunc {
 }
 
 // HandleGroupEffect returns a handler for setting group effects
-func HandleGroupEffect(client *hue.Client) server.ToolHandlerFunc {
+func HandleGroupEffect(hueClient *client.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		args := request.GetArguments()
 		groupID, ok := args["group_id"].(string)
@@ -272,7 +272,7 @@ func HandleGroupEffect(client *hue.Client) server.ToolHandlerFunc {
 			duration = int(d)
 		}
 
-		err := client.SetGroupEffect(ctx, groupID, effect, duration)
+		err := hueClient.SetGroupEffect(ctx, groupID, effect, duration)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to set effect: %v", err)), nil
 		}
@@ -290,9 +290,9 @@ func HandleGroupEffect(client *hue.Client) server.ToolHandlerFunc {
 // Scene handlers
 
 // HandleListScenes returns a handler for listing scenes
-func HandleListScenes(client *hue.Client) server.ToolHandlerFunc {
+func HandleListScenes(hueClient *client.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		scenes, err := client.GetScenes(ctx)
+		scenes, err := hueClient.GetScenes(ctx)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to list scenes: %v", err)), nil
 		}
@@ -308,7 +308,7 @@ func HandleListScenes(client *hue.Client) server.ToolHandlerFunc {
 }
 
 // HandleActivateScene returns a handler for activating a scene
-func HandleActivateScene(client *hue.Client) server.ToolHandlerFunc {
+func HandleActivateScene(hueClient *client.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		args := request.GetArguments()
 		sceneID, ok := args["scene_id"].(string)
@@ -316,7 +316,7 @@ func HandleActivateScene(client *hue.Client) server.ToolHandlerFunc {
 			return mcp.NewToolResultError("scene_id is required"), nil
 		}
 
-		err := client.ActivateScene(ctx, sceneID)
+		err := hueClient.ActivateScene(ctx, sceneID)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to activate scene: %v", err)), nil
 		}
@@ -326,7 +326,7 @@ func HandleActivateScene(client *hue.Client) server.ToolHandlerFunc {
 }
 
 // HandleCreateScene returns a handler for creating a scene
-func HandleCreateScene(client *hue.Client) server.ToolHandlerFunc {
+func HandleCreateScene(hueClient *client.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		args := request.GetArguments()
 		name, ok := args["name"].(string)
@@ -340,19 +340,19 @@ func HandleCreateScene(client *hue.Client) server.ToolHandlerFunc {
 		}
 
 		// Create scene
-		sceneCreate := hue.SceneCreate{
+		sceneCreate := client.SceneCreate{
 			Type: "scene",
-			Metadata: hue.Metadata{
+			Metadata: client.Metadata{
 				Name: name,
 			},
-			Group: hue.ResourceIdentifier{
+			Group: client.ResourceIdentifier{
 				RID:   groupID,
 				RType: "grouped_light",
 			},
-			Actions: []hue.SceneAction{}, // Would need to capture current states
+			Actions: []client.SceneAction{}, // Would need to capture current states
 		}
 
-		scene, err := client.CreateScene(ctx, sceneCreate)
+		scene, err := hueClient.CreateScene(ctx, sceneCreate)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to create scene: %v", err)), nil
 		}
@@ -364,9 +364,9 @@ func HandleCreateScene(client *hue.Client) server.ToolHandlerFunc {
 // System handlers
 
 // HandleListLights returns a handler for listing lights
-func HandleListLights(client *hue.Client) server.ToolHandlerFunc {
+func HandleListLights(hueClient *client.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		lights, err := client.GetLights(ctx)
+		lights, err := hueClient.GetLights(ctx)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to list lights: %v", err)), nil
 		}
@@ -387,9 +387,9 @@ func HandleListLights(client *hue.Client) server.ToolHandlerFunc {
 }
 
 // HandleListGroups returns a handler for listing groups
-func HandleListGroups(client *hue.Client) server.ToolHandlerFunc {
+func HandleListGroups(hueClient *client.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		groups, err := client.GetGroups(ctx)
+		groups, err := hueClient.GetGroups(ctx)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to list groups: %v", err)), nil
 		}
@@ -410,7 +410,7 @@ func HandleListGroups(client *hue.Client) server.ToolHandlerFunc {
 }
 
 // HandleGetLightState returns a handler for getting light state
-func HandleGetLightState(client *hue.Client) server.ToolHandlerFunc {
+func HandleGetLightState(hueClient *client.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		args := request.GetArguments()
 		lightID, ok := args["light_id"].(string)
@@ -418,7 +418,7 @@ func HandleGetLightState(client *hue.Client) server.ToolHandlerFunc {
 			return mcp.NewToolResultError("light_id is required"), nil
 		}
 
-		light, err := client.GetLight(ctx, lightID)
+		light, err := hueClient.GetLight(ctx, lightID)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to get light: %v", err)), nil
 		}
@@ -446,9 +446,9 @@ func HandleGetLightState(client *hue.Client) server.ToolHandlerFunc {
 }
 
 // HandleBridgeInfo returns a handler for getting bridge info
-func HandleBridgeInfo(client *hue.Client) server.ToolHandlerFunc {
+func HandleBridgeInfo(hueClient *client.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		bridge, err := client.GetBridge(ctx)
+		bridge, err := hueClient.GetBridge(ctx)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to get bridge info: %v", err)), nil
 		}
@@ -465,7 +465,7 @@ func HandleBridgeInfo(client *hue.Client) server.ToolHandlerFunc {
 }
 
 // HandleIdentifyLight returns a handler for identifying a light
-func HandleIdentifyLight(client *hue.Client) server.ToolHandlerFunc {
+func HandleIdentifyLight(hueClient *client.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		args := request.GetArguments()
 		lightID, ok := args["light_id"].(string)
@@ -473,7 +473,7 @@ func HandleIdentifyLight(client *hue.Client) server.ToolHandlerFunc {
 			return mcp.NewToolResultError("light_id is required"), nil
 		}
 
-		err := client.IdentifyLight(ctx, lightID)
+		err := hueClient.IdentifyLight(ctx, lightID)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to identify light: %v", err)), nil
 		}
@@ -530,7 +530,7 @@ type BatchCommand struct {
 }
 
 // HandleBatchCommands executes multiple commands in sequence
-func HandleBatchCommands(client *hue.Client) server.ToolHandlerFunc {
+func HandleBatchCommands(hueClient *client.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		args := request.GetArguments()
 		
@@ -576,7 +576,7 @@ func HandleBatchCommands(client *hue.Client) server.ToolHandlerFunc {
 		
 		if async {
 			// Execute asynchronously - return immediately
-			go ExecuteBatchAsync(ctx, client, commands, delayMs, batchID)
+			go ExecuteBatchAsync(ctx, hueClient, commands, delayMs, batchID)
 			
 			responseMsg := fmt.Sprintf("Batch started asynchronously with ID: %s\nCommands: %d\nDelay between commands: %dms", 
 				batchID, len(commands), delayMs)
@@ -590,7 +590,7 @@ func HandleBatchCommands(client *hue.Client) server.ToolHandlerFunc {
 			// Execute synchronously
 			log.Printf("Starting synchronous batch %s with %d commands", batchID, len(commands))
 			
-			results := executeBatch(ctx, client, commands, delayMs)
+			results := ExecuteBatch(ctx, hueClient, commands, delayMs)
 			
 			// Summarize results
 			successful := 0
@@ -616,17 +616,17 @@ func HandleBatchCommands(client *hue.Client) server.ToolHandlerFunc {
 }
 
 // executeBatchCommand executes a single command within a batch
-func executeBatchCommand(ctx context.Context, client *hue.Client, action, targetID, value string, duration int) (string, error) {
+func executeBatchCommand(ctx context.Context, hueClient *client.Client, action, targetID, value string, duration int) (string, error) {
 	switch action {
 	case "light_on":
-		err := client.TurnOnLight(ctx, targetID)
+		err := hueClient.TurnOnLight(ctx, targetID)
 		if err != nil {
 			return "", err
 		}
 		return fmt.Sprintf("Light %s turned on", targetID), nil
 
 	case "light_off":
-		err := client.TurnOffLight(ctx, targetID)
+		err := hueClient.TurnOffLight(ctx, targetID)
 		if err != nil {
 			return "", err
 		}
@@ -640,7 +640,7 @@ func executeBatchCommand(ctx context.Context, client *hue.Client, action, target
 		if brightness < 0 || brightness > 100 {
 			return "", fmt.Errorf("brightness must be between 0 and 100")
 		}
-		err = client.SetLightBrightness(ctx, targetID, brightness)
+		err = hueClient.SetLightBrightness(ctx, targetID, brightness)
 		if err != nil {
 			return "", err
 		}
@@ -657,7 +657,7 @@ func executeBatchCommand(ctx context.Context, client *hue.Client, action, target
 		if !isValidHexColor(hexColor) {
 			return "", fmt.Errorf("invalid color format: %s", value)
 		}
-		err := client.SetLightColor(ctx, targetID, hexColor)
+		err := hueClient.SetLightColor(ctx, targetID, hexColor)
 		if err != nil {
 			return "", err
 		}
@@ -667,7 +667,7 @@ func executeBatchCommand(ctx context.Context, client *hue.Client, action, target
 		if value == "" {
 			return "", fmt.Errorf("effect value is required")
 		}
-		err := client.SetLightEffect(ctx, targetID, value, duration)
+		err := hueClient.SetLightEffect(ctx, targetID, value, duration)
 		if err != nil {
 			return "", err
 		}
@@ -679,14 +679,14 @@ func executeBatchCommand(ctx context.Context, client *hue.Client, action, target
 		return result, nil
 
 	case "group_on":
-		err := client.TurnOnGroup(ctx, targetID)
+		err := hueClient.TurnOnGroup(ctx, targetID)
 		if err != nil {
 			return "", err
 		}
 		return fmt.Sprintf("Group %s turned on", targetID), nil
 
 	case "group_off":
-		err := client.TurnOffGroup(ctx, targetID)
+		err := hueClient.TurnOffGroup(ctx, targetID)
 		if err != nil {
 			return "", err
 		}
@@ -700,7 +700,7 @@ func executeBatchCommand(ctx context.Context, client *hue.Client, action, target
 		if brightness < 0 || brightness > 100 {
 			return "", fmt.Errorf("brightness must be between 0 and 100")
 		}
-		err = client.SetGroupBrightness(ctx, targetID, brightness)
+		err = hueClient.SetGroupBrightness(ctx, targetID, brightness)
 		if err != nil {
 			return "", err
 		}
@@ -717,7 +717,7 @@ func executeBatchCommand(ctx context.Context, client *hue.Client, action, target
 		if !isValidHexColor(hexColor) {
 			return "", fmt.Errorf("invalid color format: %s", value)
 		}
-		err := client.SetGroupColor(ctx, targetID, hexColor)
+		err := hueClient.SetGroupColor(ctx, targetID, hexColor)
 		if err != nil {
 			return "", err
 		}
@@ -727,7 +727,7 @@ func executeBatchCommand(ctx context.Context, client *hue.Client, action, target
 		if value == "" {
 			return "", fmt.Errorf("effect value is required")
 		}
-		err := client.SetGroupEffect(ctx, targetID, value, duration)
+		err := hueClient.SetGroupEffect(ctx, targetID, value, duration)
 		if err != nil {
 			return "", err
 		}
@@ -739,14 +739,14 @@ func executeBatchCommand(ctx context.Context, client *hue.Client, action, target
 		return result, nil
 
 	case "activate_scene":
-		err := client.ActivateScene(ctx, targetID)
+		err := hueClient.ActivateScene(ctx, targetID)
 		if err != nil {
 			return "", err
 		}
 		return fmt.Sprintf("Scene %s activated", targetID), nil
 
 	case "identify_light":
-		err := client.IdentifyLight(ctx, targetID)
+		err := hueClient.IdentifyLight(ctx, targetID)
 		if err != nil {
 			return "", err
 		}
@@ -764,8 +764,8 @@ type BatchResult struct {
 	Error   error
 }
 
-// executeBatch executes batch commands synchronously and returns results
-func executeBatch(ctx context.Context, client *hue.Client, commands []map[string]interface{}, delayMs int) []BatchResult {
+// ExecuteBatch executes batch commands synchronously and returns results
+func ExecuteBatch(ctx context.Context, client *client.Client, commands []map[string]interface{}, delayMs int) []BatchResult {
 	results := make([]BatchResult, 0, len(commands))
 	
 	for i, cmd := range commands {
@@ -804,7 +804,7 @@ func executeBatch(ctx context.Context, client *hue.Client, commands []map[string
 }
 
 // ExecuteBatchAsync executes batch commands asynchronously (exported for testing)
-func ExecuteBatchAsync(ctx context.Context, client *hue.Client, commands []map[string]interface{}, delayMs int, batchID string) {
+func ExecuteBatchAsync(ctx context.Context, client *client.Client, commands []map[string]interface{}, delayMs int, batchID string) {
 	// Create a new context that won't be cancelled by the parent
 	asyncCtx := context.Background()
 	

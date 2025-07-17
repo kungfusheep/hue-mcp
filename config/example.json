@@ -1,7 +1,7 @@
 {
   "mcpServers": {
     "hue": {
-      "command": "/path/to/hue-mcp",
+      "command": "/path/to/hue",
       "env": {
         "HUE_BRIDGE_IP": "192.168.1.100",
         "HUE_USERNAME": "your-hue-api-username"

@@ -5,15 +5,15 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/kungfusheep/hue-mcp/hue"
+	"github.com/kungfusheep/hue/client"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 )
 
 // HandleListRooms returns a handler for listing rooms
-func HandleListRooms(client *hue.Client) server.ToolHandlerFunc {
+func HandleListRooms(hueClient *client.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		rooms, err := client.GetRooms(ctx)
+		rooms, err := hueClient.GetRooms(ctx)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to list rooms: %v", err)), nil
 		}
@@ -36,9 +36,9 @@ func HandleListRooms(client *hue.Client) server.ToolHandlerFunc {
 }
 
 // HandleListZones returns a handler for listing zones
-func HandleListZones(client *hue.Client) server.ToolHandlerFunc {
+func HandleListZones(hueClient *client.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		zones, err := client.GetZones(ctx)
+		zones, err := hueClient.GetZones(ctx)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to list zones: %v", err)), nil
 		}
@@ -54,9 +54,9 @@ func HandleListZones(client *hue.Client) server.ToolHandlerFunc {
 }
 
 // HandleListDevices returns a handler for listing devices
-func HandleListDevices(client *hue.Client) server.ToolHandlerFunc {
+func HandleListDevices(hueClient *client.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		devices, err := client.GetDevices(ctx)
+		devices, err := hueClient.GetDevices(ctx)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to list devices: %v", err)), nil
 		}
@@ -83,7 +83,7 @@ func HandleListDevices(client *hue.Client) server.ToolHandlerFunc {
 }
 
 // HandleGetDevice returns a handler for getting device details
-func HandleGetDevice(client *hue.Client) server.ToolHandlerFunc {
+func HandleGetDevice(hueClient *client.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		args := request.GetArguments()
 		deviceID, ok := args["device_id"].(string)
@@ -91,7 +91,7 @@ func HandleGetDevice(client *hue.Client) server.ToolHandlerFunc {
 			return mcp.NewToolResultError("device_id is required"), nil
 		}
 
-		device, err := client.GetDevice(ctx, deviceID)
+		device, err := hueClient.GetDevice(ctx, deviceID)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to get device: %v", err)), nil
 		}

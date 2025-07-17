@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kungfusheep/hue-mcp/hue"
-	"github.com/kungfusheep/hue-mcp/scheduler"
+	"github.com/kungfusheep/hue/client"
+	"github.com/kungfusheep/hue/scheduler"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 )
@@ -17,7 +17,7 @@ import (
 var globalScheduler *scheduler.Scheduler
 
 // InitScheduler initializes the global scheduler
-func InitScheduler(client *hue.Client) {
+func InitScheduler(client *client.Client) {
 	globalScheduler = scheduler.NewScheduler(client)
 }
 
@@ -27,7 +27,7 @@ func GetScheduler() *scheduler.Scheduler {
 }
 
 // HandleFlashEffect creates a flash effect
-func HandleFlashEffect(client *hue.Client) server.ToolHandlerFunc {
+func HandleFlashEffect(hueClient *client.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		args := request.GetArguments()
 		
@@ -64,7 +64,7 @@ func HandleFlashEffect(client *hue.Client) server.ToolHandlerFunc {
 }
 
 // HandlePulseEffect creates a pulse effect
-func HandlePulseEffect(client *hue.Client) server.ToolHandlerFunc {
+func HandlePulseEffect(hueClient *client.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		args := request.GetArguments()
 		
@@ -106,7 +106,7 @@ func HandlePulseEffect(client *hue.Client) server.ToolHandlerFunc {
 }
 
 // HandleColorLoopEffect creates a color loop effect
-func HandleColorLoopEffect(client *hue.Client) server.ToolHandlerFunc {
+func HandleColorLoopEffect(hueClient *client.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		args := request.GetArguments()
 		
@@ -145,7 +145,7 @@ func HandleColorLoopEffect(client *hue.Client) server.ToolHandlerFunc {
 }
 
 // HandleStrobeEffect creates a strobe effect
-func HandleStrobeEffect(client *hue.Client) server.ToolHandlerFunc {
+func HandleStrobeEffect(hueClient *client.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		args := request.GetArguments()
 		
@@ -182,7 +182,7 @@ func HandleStrobeEffect(client *hue.Client) server.ToolHandlerFunc {
 }
 
 // HandleAlertEffect creates an alert effect
-func HandleAlertEffect(client *hue.Client) server.ToolHandlerFunc {
+func HandleAlertEffect(hueClient *client.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		args := request.GetArguments()
 		
@@ -214,7 +214,7 @@ func HandleAlertEffect(client *hue.Client) server.ToolHandlerFunc {
 }
 
 // HandleStopSequence stops one or more running sequences
-func HandleStopSequence(client *hue.Client) server.ToolHandlerFunc {
+func HandleStopSequence(hueClient *client.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		args := request.GetArguments()
 		
@@ -273,7 +273,7 @@ func HandleStopSequence(client *hue.Client) server.ToolHandlerFunc {
 }
 
 // HandleListSequences lists all sequences
-func HandleListSequences(client *hue.Client) server.ToolHandlerFunc {
+func HandleListSequences(hueClient *client.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		sequences := globalScheduler.GetSequences()
 		
@@ -295,7 +295,7 @@ func HandleListSequences(client *hue.Client) server.ToolHandlerFunc {
 }
 
 // HandleCustomSequence executes a custom sequence from JSON
-func HandleCustomSequence(client *hue.Client) server.ToolHandlerFunc {
+func HandleCustomSequence(hueClient *client.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		args := request.GetArguments()
 		

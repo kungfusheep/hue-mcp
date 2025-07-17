@@ -5,15 +5,15 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/kungfusheep/hue-mcp/hue"
+	"github.com/kungfusheep/hue/client"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 )
 
 // HandleListMotionSensors returns a handler for listing motion sensors
-func HandleListMotionSensors(client *hue.Client) server.ToolHandlerFunc {
+func HandleListMotionSensors(hueClient *client.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		sensors, err := client.GetMotionSensors(ctx)
+		sensors, err := hueClient.GetMotionSensors(ctx)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to list motion sensors: %v", err)), nil
 		}
@@ -38,9 +38,9 @@ func HandleListMotionSensors(client *hue.Client) server.ToolHandlerFunc {
 }
 
 // HandleListTemperatureSensors returns a handler for listing temperature sensors
-func HandleListTemperatureSensors(client *hue.Client) server.ToolHandlerFunc {
+func HandleListTemperatureSensors(hueClient *client.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		sensors, err := client.GetTemperatureSensors(ctx)
+		sensors, err := hueClient.GetTemperatureSensors(ctx)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to list temperature sensors: %v", err)), nil
 		}
@@ -65,9 +65,9 @@ func HandleListTemperatureSensors(client *hue.Client) server.ToolHandlerFunc {
 }
 
 // HandleListLightLevelSensors returns a handler for listing light level sensors
-func HandleListLightLevelSensors(client *hue.Client) server.ToolHandlerFunc {
+func HandleListLightLevelSensors(hueClient *client.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		sensors, err := client.GetLightLevelSensors(ctx)
+		sensors, err := hueClient.GetLightLevelSensors(ctx)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to list light level sensors: %v", err)), nil
 		}
@@ -92,9 +92,9 @@ func HandleListLightLevelSensors(client *hue.Client) server.ToolHandlerFunc {
 }
 
 // HandleListButtons returns a handler for listing buttons (dimmer switches)
-func HandleListButtons(client *hue.Client) server.ToolHandlerFunc {
+func HandleListButtons(hueClient *client.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		buttons, err := client.GetButtons(ctx)
+		buttons, err := hueClient.GetButtons(ctx)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to list buttons: %v", err)), nil
 		}

@@ -6,16 +6,16 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/kungfusheep/hue-mcp/hue"
+	"github.com/kungfusheep/hue/client"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 )
 
 // EventManager manages event streaming for MCP
 type EventManager struct {
-	client        *hue.Client
-	stream        *hue.EventStream
-	recentEvents  []hue.Event
+	client        *client.Client
+	stream        *client.EventStream
+	recentEvents  []client.Event
 	eventsMutex   sync.RWMutex
 	maxEvents     int
 	streaming     bool
@@ -26,19 +26,19 @@ type EventManager struct {
 var eventManager *EventManager
 
 // InitEventManager initializes the global event manager
-func InitEventManager(client *hue.Client) {
+func InitEventManager(hueClient *client.Client) {
 	eventManager = &EventManager{
-		client:       client,
-		recentEvents: make([]hue.Event, 0),
+		client:       hueClient,
+		recentEvents: make([]client.Event, 0),
 		maxEvents:    1000,
 	}
 }
 
 // HandleStartEventStream starts the event stream
-func HandleStartEventStream(client *hue.Client) server.ToolHandlerFunc {
+func HandleStartEventStream(hueClient *client.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		if eventManager == nil {
-			InitEventManager(client)
+			InitEventManager(hueClient)
 		}
 
 		eventManager.streamingLock.Lock()
@@ -56,7 +56,7 @@ func HandleStartEventStream(client *hue.Client) server.ToolHandlerFunc {
 		}
 
 		// Start the stream
-		stream, err := client.StreamEvents(ctx)
+		stream, err := hueClient.StreamEvents(ctx)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to start event stream: %v", err)), nil
 		}
@@ -77,7 +77,7 @@ func HandleStartEventStream(client *hue.Client) server.ToolHandlerFunc {
 }
 
 // HandleStopEventStream stops the event stream
-func HandleStopEventStream(client *hue.Client) server.ToolHandlerFunc {
+func HandleStopEventStream(hueClient *client.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		if eventManager == nil || !eventManager.streaming {
 			return mcp.NewToolResultText("Event stream is not running"), nil
@@ -97,7 +97,7 @@ func HandleStopEventStream(client *hue.Client) server.ToolHandlerFunc {
 }
 
 // HandleGetRecentEvents returns recent events
-func HandleGetRecentEvents(client *hue.Client) server.ToolHandlerFunc {
+func HandleGetRecentEvents(hueClient *client.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		if eventManager == nil {
 			return mcp.NewToolResultText("Event stream has not been started"), nil
@@ -182,7 +182,7 @@ func HandleGetRecentEvents(client *hue.Client) server.ToolHandlerFunc {
 }
 
 // HandleGetEventStreamStatus returns the current streaming status
-func HandleGetEventStreamStatus(client *hue.Client) server.ToolHandlerFunc {
+func HandleGetEventStreamStatus(hueClient *client.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		var result strings.Builder
 		
@@ -215,7 +215,7 @@ func HandleGetEventStreamStatus(client *hue.Client) server.ToolHandlerFunc {
 
 // processEvents processes incoming events
 func (em *EventManager) processEvents(filterTypes []string) {
-	var events <-chan hue.Event
+	var events <-chan client.Event
 	
 	if len(filterTypes) > 0 {
 		events = em.stream.FilterEvents(filterTypes...)
@@ -242,7 +242,7 @@ func (em *EventManager) processEvents(filterTypes []string) {
 }
 
 // storeEvent stores an event in the recent events buffer
-func (em *EventManager) storeEvent(event hue.Event) {
+func (em *EventManager) storeEvent(event client.Event) {
 	em.eventsMutex.Lock()
 	defer em.eventsMutex.Unlock()
 	

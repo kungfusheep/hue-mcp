@@ -1,6 +1,6 @@
-# Philips Hue v2 MCP Server
+# Philips Hue MCP Server & CLI
 
-A Model Context Protocol (MCP) server for Philips Hue v2 API, enabling native lighting effects and comprehensive control for your AI agents.
+A Model Context Protocol (MCP) server and CLI for Philips Hue v2 API, enabling native lighting effects and comprehensive control for both AI agents and command-line users.
 
 ## Features
 
@@ -39,18 +39,18 @@ curl https://discovery.meethue.com/
 Get an API username:
 ```bash
 # Press the link button on your Hue Bridge, then run:
-curl -X POST http://<BRIDGE_IP>/api -H "Content-Type: application/json" -d '{"devicetype":"hue_mcp#claude"}'
+curl -X POST http://<BRIDGE_IP>/api -H "Content-Type: application/json" -d '{"devicetype":"hue#claude"}'
 ```
 
 ### 2. Build the MCP Server
 
 ```bash
 # Clone the repository
-git clone https://github.com/kungfusheep/hue-mcp.git
-cd hue-mcp
+git clone https://github.com/kungfusheep/hue.git
+cd hue
 
 # Build the binary
-go build -o hue-mcp
+go build -o hue
 ```
 
 ### 3. Set Environment Variables
@@ -71,7 +71,7 @@ Add to your Claude Desktop configuration file:
 {
   "mcpServers": {
     "hue": {
-      "command": "/absolute/path/to/hue-mcp",
+      "command": "/absolute/path/to/hue",
       "env": {
         "HUE_BRIDGE_IP": "YOUR_BRIDGE_IP",
         "HUE_USERNAME": "YOUR_API_USERNAME"
@@ -85,7 +85,36 @@ Add to your Claude Desktop configuration file:
 
 Quit and restart Claude Desktop to load the new configuration.
 
-## Usage Examples
+## CLI Usage
+
+The `hue` binary also functions as a standalone CLI tool:
+
+```bash
+# Run in CLI mode
+./hue cli <command>
+
+# Examples:
+./hue cli lights list
+./hue cli lights on "Office Lamp"
+./hue cli lights color "Office Lamp" blue
+./hue cli lights brightness "Office Lamp" 50
+
+# Group control
+./hue cli groups on "Living Room"
+./hue cli groups color "Kitchen" warm
+
+# Effects
+./hue cli effects flash "Office Lamp" --color red --count 3
+./hue cli effects pulse "Bedroom Light" --min 10 --max 90
+
+# Native Hue scenes
+./hue cli hue-scenes list
+./hue cli hue-scenes activate "Relax"
+```
+
+The CLI supports friendly names for all lights and rooms - no need to use UUIDs!
+
+## MCP Usage Examples
 
 Once configured, you can ask Claude to:
 

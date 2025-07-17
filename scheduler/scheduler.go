@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/kungfusheep/hue-mcp/hue"
+	"github.com/kungfusheep/hue/client"
 )
 
 // Command represents a scheduled command
@@ -30,7 +30,7 @@ type Sequence struct {
 
 // Scheduler manages scheduled lighting operations
 type Scheduler struct {
-	client    *hue.Client
+	client    *client.Client
 	sequences map[string]*Sequence
 	mu        sync.RWMutex
 	ctx       context.Context
@@ -38,7 +38,7 @@ type Scheduler struct {
 }
 
 // NewScheduler creates a new scheduler
-func NewScheduler(client *hue.Client) *Scheduler {
+func NewScheduler(client *client.Client) *Scheduler {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Scheduler{
 		client:    client,

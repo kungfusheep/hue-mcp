@@ -8,15 +8,15 @@ import (
 	"sync"
 	"time"
 
-	"github.com/kungfusheep/hue-mcp/hue"
+	"github.com/kungfusheep/hue/client"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 )
 
 // HandleListEntertainment returns a handler for listing entertainment configurations
-func HandleListEntertainment(client *hue.Client) server.ToolHandlerFunc {
+func HandleListEntertainment(hueClient *client.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		configs, err := client.GetEntertainmentConfigurations(ctx)
+		configs, err := hueClient.GetEntertainmentConfigurations(ctx)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to list entertainment configurations: %v", err)), nil
 		}
@@ -40,7 +40,7 @@ func HandleListEntertainment(client *hue.Client) server.ToolHandlerFunc {
 }
 
 // HandleStartEntertainment returns a handler for starting entertainment mode
-func HandleStartEntertainment(client *hue.Client) server.ToolHandlerFunc {
+func HandleStartEntertainment(hueClient *client.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		args := request.GetArguments()
 		configID, ok := args["config_id"].(string)
@@ -48,7 +48,7 @@ func HandleStartEntertainment(client *hue.Client) server.ToolHandlerFunc {
 			return mcp.NewToolResultError("config_id is required"), nil
 		}
 
-		err := client.StartEntertainment(ctx, configID)
+		err := hueClient.StartEntertainment(ctx, configID)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to start entertainment: %v", err)), nil
 		}
@@ -58,7 +58,7 @@ func HandleStartEntertainment(client *hue.Client) server.ToolHandlerFunc {
 }
 
 // HandleStopEntertainment returns a handler for stopping entertainment mode
-func HandleStopEntertainment(client *hue.Client) server.ToolHandlerFunc {
+func HandleStopEntertainment(hueClient *client.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		args := request.GetArguments()
 		configID, ok := args["config_id"].(string)
@@ -66,7 +66,7 @@ func HandleStopEntertainment(client *hue.Client) server.ToolHandlerFunc {
 			return mcp.NewToolResultError("config_id is required"), nil
 		}
 
-		err := client.StopEntertainment(ctx, configID)
+		err := hueClient.StopEntertainment(ctx, configID)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to stop entertainment: %v", err)), nil
 		}
@@ -77,12 +77,12 @@ func HandleStopEntertainment(client *hue.Client) server.ToolHandlerFunc {
 
 // Global entertainment streamer management
 var (
-	activeStreamers = make(map[string]*hue.EntertainmentStreamer)
+	activeStreamers = make(map[string]*client.EntertainmentStreamer)
 	streamersMutex  sync.RWMutex
 )
 
 // HandleStartStreaming starts UDP streaming for an entertainment configuration
-func HandleStartStreaming(client *hue.Client) server.ToolHandlerFunc {
+func HandleStartStreaming(hueClient *client.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		args := request.GetArguments()
 		
@@ -101,7 +101,7 @@ func HandleStartStreaming(client *hue.Client) server.ToolHandlerFunc {
 		}
 
 		// Create new streamer
-		streamer, err := hue.NewEntertainmentStreamer(client, configID)
+		streamer, err := client.NewEntertainmentStreamer(hueClient, configID)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to create streamer: %v", err)), nil
 		}
@@ -129,7 +129,7 @@ func HandleStartStreaming(client *hue.Client) server.ToolHandlerFunc {
 }
 
 // HandleStopStreaming stops UDP streaming for an entertainment configuration
-func HandleStopStreaming(client *hue.Client) server.ToolHandlerFunc {
+func HandleStopStreaming(hueClient *client.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		args := request.GetArguments()
 		
@@ -159,7 +159,7 @@ func HandleStopStreaming(client *hue.Client) server.ToolHandlerFunc {
 }
 
 // HandleSendColors sends color updates to streaming lights
-func HandleSendColors(client *hue.Client) server.ToolHandlerFunc {
+func HandleSendColors(hueClient *client.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		args := request.GetArguments()
 		
@@ -198,7 +198,7 @@ func HandleSendColors(client *hue.Client) server.ToolHandlerFunc {
 }
 
 // HandleStreamingStatus gets the status of all active streamers
-func HandleStreamingStatus(client *hue.Client) server.ToolHandlerFunc {
+func HandleStreamingStatus(hueClient *client.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		streamersMutex.RLock()
 		defer streamersMutex.RUnlock()
@@ -225,7 +225,7 @@ func HandleStreamingStatus(client *hue.Client) server.ToolHandlerFunc {
 }
 
 // HandleRainbowEffect creates a rainbow effect on streaming lights
-func HandleRainbowEffect(client *hue.Client) server.ToolHandlerFunc {
+func HandleRainbowEffect(hueClient *client.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		args := request.GetArguments()
 		
@@ -266,8 +266,8 @@ func HandleRainbowEffect(client *hue.Client) server.ToolHandlerFunc {
 }
 
 // parseColorUpdates parses color updates from string format
-func parseColorUpdates(colorsStr string) ([]hue.EntertainmentUpdate, error) {
-	var updates []hue.EntertainmentUpdate
+func parseColorUpdates(colorsStr string) ([]client.EntertainmentUpdate, error) {
+	var updates []client.EntertainmentUpdate
 	
 	pairs := strings.Split(colorsStr, ";")
 	for _, pair := range pairs {
@@ -305,9 +305,9 @@ func parseColorUpdates(colorsStr string) ([]hue.EntertainmentUpdate, error) {
 		}
 		
 		// Convert to 16-bit values
-		red, green, blue := hue.RGBToUint16(uint8(r), uint8(g), uint8(b))
+		red, green, blue := client.RGBToUint16(uint8(r), uint8(g), uint8(b))
 		
-		updates = append(updates, hue.EntertainmentUpdate{
+		updates = append(updates, client.EntertainmentUpdate{
 			LightID: lightID,
 			Red:     red,
 			Green:   green,
@@ -319,7 +319,7 @@ func parseColorUpdates(colorsStr string) ([]hue.EntertainmentUpdate, error) {
 }
 
 // runRainbowEffect runs a rainbow effect on the given lights
-func runRainbowEffect(streamer *hue.EntertainmentStreamer, lights []hue.ResourceIdentifier, duration time.Duration) {
+func runRainbowEffect(streamer *client.EntertainmentStreamer, lights []client.ResourceIdentifier, duration time.Duration) {
 	start := time.Now()
 	ticker := time.NewTicker(50 * time.Millisecond) // 20fps
 	defer ticker.Stop()
@@ -333,7 +333,7 @@ func runRainbowEffect(streamer *hue.EntertainmentStreamer, lights []hue.Resource
 			
 			// Calculate rainbow colors
 			progress := float64(time.Since(start)) / float64(duration)
-			var updates []hue.EntertainmentUpdate
+			var updates []client.EntertainmentUpdate
 			
 			for i, light := range lights {
 				// Create rainbow effect with phase offset for each light
@@ -343,9 +343,9 @@ func runRainbowEffect(streamer *hue.EntertainmentStreamer, lights []hue.Resource
 				}
 				
 				r, g, b := hsvToRGB(hueValue, 1.0, 1.0)
-				red, green, blue := hue.FloatRGBToUint16(r, g, b)
+				red, green, blue := client.FloatRGBToUint16(r, g, b)
 				
-				updates = append(updates, hue.EntertainmentUpdate{
+				updates = append(updates, client.EntertainmentUpdate{
 					LightID: light.RID,
 					Red:     red,
 					Green:   green,
