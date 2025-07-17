@@ -121,6 +121,17 @@ The `hue` binary functions as both an MCP server and a standalone CLI tool:
 ./hue scenes list
 ./hue scenes recall "alien_artifact_discovery"
 
+# Sensors
+./hue sensors motion     # List motion sensors
+./hue sensors temperature # List temperature sensors
+./hue sensors light      # List light level sensors
+
+# Real-time event streaming
+./hue stream             # Stream all events
+./hue stream -f motion   # Stream only motion events
+./hue stream -f "motion,temperature"  # Multiple event types
+./hue stream -r          # Show raw JSON events
+
 # Batch commands
 ./hue batch -f commands.json
 ```
