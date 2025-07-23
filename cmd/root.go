@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 
@@ -68,8 +69,12 @@ func init() {
 
 // Helper functions for output
 func printJSON(data interface{}) {
-	// TODO: Implement JSON output
-	fmt.Printf("%+v\n", data)
+	jsonData, err := json.MarshalIndent(data, "", "  ")
+	if err != nil {
+		printError("failed to marshal JSON: %v", err)
+		return
+	}
+	fmt.Println(string(jsonData))
 }
 
 func printMessage(format string, args ...interface{}) {

@@ -91,49 +91,49 @@ The `hue` binary functions as both an MCP server and a standalone CLI tool:
 
 ```bash
 # Run as MCP server (for Claude Desktop)
-./hue
+hue
 
 # Run CLI commands directly
-./hue <command>
+hue <command>
 
 # Examples:
-./hue lights list
-./hue lights on "Office Lamp"
-./hue lights color "Office Lamp" blue
-./hue lights brightness "Office Lamp" 50
+hue lights list
+hue lights on "Office Lamp"
+hue lights color "Office Lamp" blue
+hue lights brightness "Office Lamp" 50
 
 # Group control
-./hue groups list
-./hue groups on "Living Room"
-./hue groups color "Kitchen" warm
-./hue groups rooms  # List all rooms
+hue groups list
+hue groups on "Living Room"
+hue groups color "Kitchen" warm
+hue groups rooms  # List all rooms
 
 # Effects
-./hue effects flash "Office Lamp" --color red --count 3
-./hue effects pulse "Bedroom Light" --min 10 --max 90
-./hue effects stop <sequence-id>
+hue effects flash "Office Lamp" --color red --count 3
+hue effects pulse "Bedroom Light" --min 10 --max 90
+hue effects stop <sequence-id>
 
 # Native Hue scenes
-./hue hue-scenes list
-./hue hue-scenes activate "Relax"
+hue hue-scenes list
+hue hue-scenes activate "Relax"
 
 # Cached scenes (from MCP)
-./hue scenes list
-./hue scenes recall "alien_artifact_discovery"
+hue scenes list
+hue scenes recall "alien_artifact_discovery"
 
 # Sensors
-./hue sensors motion     # List motion sensors
-./hue sensors temperature # List temperature sensors
-./hue sensors light      # List light level sensors
+hue sensors motion     # List motion sensors
+hue sensors temperature # List temperature sensors
+hue sensors light      # List light level sensors
 
 # Real-time event streaming
-./hue stream             # Stream all events
-./hue stream -f motion   # Stream only motion events
-./hue stream -f "motion,temperature"  # Multiple event types
-./hue stream -r          # Show raw JSON events
+hue stream             # Stream all events
+hue stream -f motion   # Stream only motion events
+hue stream -f "motion,temperature"  # Multiple event types
+hue stream -r          # Show raw JSON events
 
 # Batch commands
-./hue batch -f commands.json
+hue batch -f commands.json
 ```
 
 The CLI supports friendly names for all lights and rooms - no need to use UUIDs!
