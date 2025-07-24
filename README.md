@@ -29,20 +29,35 @@ A Model Context Protocol (MCP) server and CLI for Philips Hue v2 API, enabling n
 
 ## Setup
 
-### 1. Get Your Hue Bridge IP and Username
+### 1. Find Your Hue Bridge
 
-Find your bridge IP:
+Use the built-in discovery command:
+```bash
+# Automatically discover bridges on your network
+./hue discover
+
+# Example output:
+# 🌉 Bridge 1
+#    ID: 001788fffe696373
+#    IP Address: 192.168.87.51
+#    Status: ✅ Reachable
+#    Name: Hue Bridge
+```
+
+Alternatively, find your bridge IP manually:
 ```bash
 curl https://discovery.meethue.com/
 ```
 
-Get an API username:
+### 2. Get Your API Username
+
+Press the link button on your Hue Bridge, then run:
 ```bash
-# Press the link button on your Hue Bridge, then run:
-curl -X POST http://<BRIDGE_IP>/api -H "Content-Type: application/json" -d '{"devicetype":"hue#claude"}'
+# Use the IP from discovery above
+curl -X POST http://<BRIDGE_IP>/api -H "Content-Type: application/json" -d '{"devicetype":"hue#cli"}'
 ```
 
-### 2. Build the MCP Server
+### 3. Build the MCP Server
 
 ```bash
 # Clone the repository
@@ -53,14 +68,14 @@ cd hue
 go build -o hue
 ```
 
-### 3. Set Environment Variables
+### 4. Set Environment Variables
 
 ```bash
 export HUE_BRIDGE_IP="192.168.1.100"  # Your bridge IP
 export HUE_USERNAME="your-api-username-here"
 ```
 
-### 4. Configure Claude Desktop (example)
+### 5. Configure Claude Desktop (example)
 
 Add to your Claude Desktop configuration file:
 
@@ -81,7 +96,7 @@ Add to your Claude Desktop configuration file:
 }
 ```
 
-### 5. Restart Claude Desktop
+### 6. Restart Claude Desktop
 
 Quit and restart Claude Desktop to load the new configuration.
 
@@ -95,6 +110,10 @@ hue
 
 # Run CLI commands directly
 hue <command>
+
+# Bridge discovery
+hue discover          # Find bridges automatically
+hue discover --json   # JSON output for scripting
 
 # Examples:
 hue lights list

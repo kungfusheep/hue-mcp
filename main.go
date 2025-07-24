@@ -24,7 +24,7 @@ func main() {
 	}
 
 	// Check if it's a CLI command
-	cliCommands := []string{"lights", "groups", "effects", "scenes", "hue-scenes", "sensors", "batch", "stream", "help"}
+	cliCommands := []string{"lights", "groups", "effects", "scenes", "hue-scenes", "sensors", "batch", "stream", "discover", "help"}
 	for _, cmd := range cliCommands {
 		if os.Args[1] == cmd {
 			runCLI()
