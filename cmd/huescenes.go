@@ -16,6 +16,12 @@ var hueScenesCmd = &cobra.Command{
 	Long:  `Commands for managing native Philips Hue scenes (not cached scenes).`,
 }
 
+var (
+	showIDs     bool
+	showActions bool
+	showGroups  bool
+)
+
 // listHueScenesCmd lists all native Hue scenes
 var listHueScenesCmd = &cobra.Command{
 	Use:   "list",
@@ -32,18 +38,59 @@ var listHueScenesCmd = &cobra.Command{
 			return nil
 		}
 
+		// Get rooms to map group IDs to room names
+		rooms, err := hueClient.GetRooms(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to get rooms: %w", err)
+		}
+
+		// Create a map of room ID to room name
+		roomIDToName := make(map[string]string)
+		for _, room := range rooms {
+			roomIDToName[room.ID] = room.Metadata.Name
+		}
+
+		// Also get zones if any
+		zones, err := hueClient.GetZones(ctx)
+		if err == nil {
+			for _, zone := range zones {
+				roomIDToName[zone.ID] = zone.Metadata.Name
+			}
+		}
+
 		// Human-readable output
 		fmt.Printf("Found %d Hue scenes:\n\n", len(scenes))
 		for _, scene := range scenes {
-			fmt.Printf("📋 %s\n", scene.Metadata.Name)
-			fmt.Printf("   ID: %s\n", scene.ID)
-			if scene.IDV1 != "" {
-				fmt.Printf("   V1 ID: %s\n", scene.IDV1)
+			// Basic output - scene name and room
+			roomName := ""
+			if scene.Group.RType == "room" || scene.Group.RType == "zone" {
+				roomName = roomIDToName[scene.Group.RID]
 			}
-			if scene.Group.RID != "" {
-				fmt.Printf("   Group: %s\n", scene.Group.RID)
+			
+			if roomName != "" {
+				fmt.Printf("📋 %s (%s)\n", scene.Metadata.Name, roomName)
+			} else {
+				fmt.Printf("📋 %s\n", scene.Metadata.Name)
 			}
-			fmt.Printf("   Actions: %d\n", len(scene.Actions))
+			
+			// Optional: show IDs
+			if showIDs {
+				fmt.Printf("   ID: %s\n", scene.ID)
+				if scene.IDV1 != "" {
+					fmt.Printf("   V1 ID: %s\n", scene.IDV1)
+				}
+			}
+			
+			// Optional: show group ID
+			if showGroups && scene.Group.RID != "" {
+				fmt.Printf("   Group ID: %s\n", scene.Group.RID)
+			}
+			
+			// Optional: show action count
+			if showActions {
+				fmt.Printf("   Actions: %d\n", len(scene.Actions))
+			}
+			
 			fmt.Println()
 		}
 		
@@ -55,6 +102,7 @@ var listHueScenesCmd = &cobra.Command{
 var activateHueSceneCmd = &cobra.Command{
 	Use:   "activate <scene-name-or-id>",
 	Short: "Activate a native Hue scene",
+	Long:  `Activate a native Hue scene by name or ID. For scenes with the same name in different rooms, use 'SceneName:RoomName' format (e.g., 'Nightlight:Master Bedroom').`,
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := context.Background()
@@ -150,6 +198,11 @@ var findHueSceneCmd = &cobra.Command{
 }
 
 func init() {
+	// Add flags to list command
+	listHueScenesCmd.Flags().BoolVar(&showIDs, "show-ids", false, "Show scene IDs")
+	listHueScenesCmd.Flags().BoolVar(&showActions, "show-actions", false, "Show action counts")
+	listHueScenesCmd.Flags().BoolVar(&showGroups, "show-groups", false, "Show group IDs")
+	
 	// Add subcommands
 	hueScenesCmd.AddCommand(listHueScenesCmd)
 	hueScenesCmd.AddCommand(activateHueSceneCmd)

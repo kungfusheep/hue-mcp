@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	
+	"github.com/kungfusheep/hue/client"
 )
 
 // resolveLightID takes a name or ID and returns the actual light ID
@@ -149,49 +151,146 @@ func resolveSceneID(ctx context.Context, nameOrID string) (string, error) {
 		return nameOrID, nil
 	}
 	
-	// Otherwise, search for the scene by name
+	// Check if input contains room specifier like "Nightlight:Master Bedroom"
+	parts := strings.Split(nameOrID, ":")
+	sceneName := strings.TrimSpace(parts[0])
+	roomFilter := ""
+	if len(parts) == 2 {
+		roomFilter = strings.TrimSpace(parts[1])
+	}
+	
+	// Get scenes
 	scenes, err := hueClient.GetScenes(ctx)
 	if err != nil {
 		return "", fmt.Errorf("failed to get scenes: %w", err)
 	}
 	
-	// Try exact match first
-	for _, scene := range scenes {
-		if strings.EqualFold(scene.Metadata.Name, nameOrID) {
-			return scene.ID, nil
+	// Get rooms and zones for room name lookup
+	rooms, err := hueClient.GetRooms(ctx)
+	if err != nil {
+		return "", fmt.Errorf("failed to get rooms: %w", err)
+	}
+	
+	roomIDToName := make(map[string]string)
+	for _, room := range rooms {
+		roomIDToName[room.ID] = room.Metadata.Name
+	}
+	
+	zones, err := hueClient.GetZones(ctx)
+	if err == nil {
+		for _, zone := range zones {
+			roomIDToName[zone.ID] = zone.Metadata.Name
 		}
 	}
 	
-	// Try partial match
-	var matches []struct {
-		ID   string
-		Name string
+	// Helper to get room name for a scene
+	getRoomName := func(scene client.Scene) string {
+		if scene.Group.RType == "room" || scene.Group.RType == "zone" {
+			return roomIDToName[scene.Group.RID]
+		}
+		return ""
 	}
 	
-	searchLower := strings.ToLower(nameOrID)
+	// If room filter specified, try to find matching scene
+	if roomFilter != "" {
+		var roomFilterMatches []struct {
+			ID       string
+			Name     string
+			RoomName string
+		}
+		
+		roomFilterLower := strings.ToLower(roomFilter)
+		for _, scene := range scenes {
+			roomName := getRoomName(scene)
+			if strings.EqualFold(scene.Metadata.Name, sceneName) && 
+			   strings.Contains(strings.ToLower(roomName), roomFilterLower) {
+				roomFilterMatches = append(roomFilterMatches, struct {
+					ID       string
+					Name     string
+					RoomName string
+				}{
+					ID:       scene.ID,
+					Name:     scene.Metadata.Name,
+					RoomName: roomName,
+				})
+			}
+		}
+		
+		if len(roomFilterMatches) == 1 {
+			return roomFilterMatches[0].ID, nil
+		}
+		
+		if len(roomFilterMatches) > 1 {
+			return "", fmt.Errorf("multiple scenes match '%s' in rooms containing '%s':\n%s\nPlease be more specific", 
+				sceneName, roomFilter, formatSceneMatches(roomFilterMatches))
+		}
+		// If no matches with room filter, continue to show all matches
+	}
+	
+	// Try exact match first (no room filter)
+	var exactMatches []struct {
+		ID       string
+		Name     string
+		RoomName string
+	}
+	
 	for _, scene := range scenes {
-		if strings.Contains(strings.ToLower(scene.Metadata.Name), searchLower) {
-			matches = append(matches, struct {
-				ID   string
-				Name string
+		if strings.EqualFold(scene.Metadata.Name, sceneName) {
+			exactMatches = append(exactMatches, struct {
+				ID       string
+				Name     string
+				RoomName string
 			}{
-				ID:   scene.ID,
-				Name: scene.Metadata.Name,
+				ID:       scene.ID,
+				Name:     scene.Metadata.Name,
+				RoomName: getRoomName(scene),
 			})
 		}
 	}
 	
-	if len(matches) == 0 {
+	if len(exactMatches) == 1 {
+		return exactMatches[0].ID, nil
+	}
+	
+	if len(exactMatches) > 1 {
+		// Multiple exact matches - show with room names
+		return "", fmt.Errorf("multiple scenes named '%s':\n%s\nSpecify the room like: '%s:Room Name'", 
+			sceneName, formatSceneMatches(exactMatches), sceneName)
+	}
+	
+	// Try partial match
+	var partialMatches []struct {
+		ID       string
+		Name     string
+		RoomName string
+	}
+	
+	searchLower := strings.ToLower(sceneName)
+	for _, scene := range scenes {
+		if strings.Contains(strings.ToLower(scene.Metadata.Name), searchLower) {
+			partialMatches = append(partialMatches, struct {
+				ID       string
+				Name     string
+				RoomName string
+			}{
+				ID:       scene.ID,
+				Name:     scene.Metadata.Name,
+				RoomName: getRoomName(scene),
+			})
+		}
+	}
+	
+	if len(partialMatches) == 0 {
 		return "", fmt.Errorf("no scene found matching '%s'", nameOrID)
 	}
 	
-	if len(matches) == 1 {
-		return matches[0].ID, nil
+	if len(partialMatches) == 1 {
+		return partialMatches[0].ID, nil
 	}
 	
 	// Multiple matches
 	return "", fmt.Errorf("multiple scenes match '%s':\n%s\nPlease be more specific", 
-		nameOrID, formatMatches(matches))
+		nameOrID, formatSceneMatches(partialMatches))
 }
 
 // formatMatches formats multiple matches for display
@@ -202,6 +301,23 @@ func formatMatches(matches []struct {
 	var lines []string
 	for _, match := range matches {
 		lines = append(lines, fmt.Sprintf("  - %s (ID: %s)", match.Name, match.ID))
+	}
+	return strings.Join(lines, "\n")
+}
+
+// formatSceneMatches formats multiple scene matches with room info
+func formatSceneMatches(matches []struct {
+	ID       string
+	Name     string
+	RoomName string
+}) string {
+	var lines []string
+	for _, match := range matches {
+		if match.RoomName != "" {
+			lines = append(lines, fmt.Sprintf("  - %s (%s) [ID: %s]", match.Name, match.RoomName, match.ID))
+		} else {
+			lines = append(lines, fmt.Sprintf("  - %s [ID: %s]", match.Name, match.ID))
+		}
 	}
 	return strings.Join(lines, "\n")
 }
